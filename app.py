@@ -68,7 +68,7 @@ def register_vendor():
         ifsc = request.form['ifsc']
         communication_data = request.form.getlist('comm_data[]')  # List of comm rows
 
-        cur.execute("""
+        cursor.execute("""
             INSERT INTO vendors (vendor_name, gst, pan, bank_name, branch, account_no, ifsc)
             VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id
         """, (vendor_name, gst, pan, bank_name, branch, account_no, ifsc))
@@ -76,7 +76,7 @@ def register_vendor():
 
         for data in communication_data:
             name, mobile, email, designation = data.split('|')
-            cur.execute("""
+            cursor.execute("""
                 INSERT INTO vendor_contacts (vendor_id, contact_name, mobile, email, designation)
                 VALUES (%s, %s, %s, %s, %s)
             """, (vendor_id, name, mobile, email, designation))
