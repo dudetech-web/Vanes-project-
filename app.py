@@ -238,9 +238,9 @@ def export_excel():
 
 @app.before_request
 def require_login():
-    allowed_routes = ['login', 'do_login', 'static']
+    allowed_routes = ['login', 'do_login', 'dashboard', 'static']
     if request.endpoint not in allowed_routes and 'user' not in session:
         return redirect(url_for('login'))
-
+        
 if __name__ == "__main__":
     app.run(debug=True)
