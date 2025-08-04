@@ -10,12 +10,14 @@ app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 
 # PostgreSQL connection
+
 conn = psycopg2.connect(
-    dbname="your_dbname",
-    user="your_username",
-    password="your_password",
-    host="your_host",
-    port="your_port"
+    dbname="duct_vendor_app",
+    user="duct_vendor_app_user",
+    password="6F8CX3mCEBU8E4azRCf0s6gdQeWaL9bq",
+    host="dpg-d243r9qli9vc73ca99ag-a.singapore-postgres.render.com",
+    port=5432
+
 )
 cur = conn.cursor()
 
