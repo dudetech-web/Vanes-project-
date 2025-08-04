@@ -17,7 +17,7 @@ def init_db():
         username TEXT NOT NULL,
         password TEXT NOT NULL)''')
 
-    # Vendors
+    # Vendors table
     c.execute('''CREATE TABLE IF NOT EXISTS vendors (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT, gst TEXT, pan TEXT,
@@ -25,47 +25,42 @@ def init_db():
         account_no TEXT, ifsc TEXT,
         address TEXT)''')
 
-    # Employees
-    # Drop existing employees table (optional, for a fresh setup)
-# c.execute('DROP TABLE IF EXISTS employees')
+    # Employees table
+    c.execute('''CREATE TABLE IF NOT EXISTS employees (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        dob TEXT,
+        gender TEXT,
+        marital_status TEXT,
+        aadhaar TEXT,
+        pan TEXT,
+        esi TEXT,
+        designation TEXT,
+        location TEXT,
+        doj TEXT,
+        employment_type TEXT,
+        bank_name TEXT,
+        branch TEXT,
+        account_no TEXT,
+        ifsc TEXT,
+        emergency_name TEXT,
+        emergency_relation TEXT,
+        emergency_mobile TEXT,
+        blood_group TEXT,
+        allergies TEXT,
+        medical_conditions TEXT,
+        reference_name TEXT,
+        reference_mobile TEXT,
+        reference_relation TEXT
+    )''')
 
-       
-
-   c.execute('''CREATE TABLE IF NOT EXISTS employees (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT,
-    dob TEXT,
-    gender TEXT,
-    marital_status TEXT,
-    aadhaar TEXT,
-    pan TEXT,
-    esi TEXT,
-    designation TEXT,
-    location TEXT,
-    doj TEXT,
-    employment_type TEXT,
-    bank_name TEXT,
-    branch TEXT,
-    account_no TEXT,
-    ifsc TEXT,
-    emergency_name TEXT,
-    emergency_relation TEXT,
-    emergency_mobile TEXT,
-    blood_group TEXT,
-    allergies TEXT,
-    medical_conditions TEXT,
-    reference_name TEXT,
-    reference_mobile TEXT,
-    reference_relation TEXT
-)''')
-
-    # Projects
+    # Projects table
     c.execute('''CREATE TABLE IF NOT EXISTS projects (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT, location TEXT,
         client TEXT, start_date TEXT)''')
 
-    # Measurements
+    # Measurements table
     c.execute('''CREATE TABLE IF NOT EXISTS measurements (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         project_id INTEGER, duct_no TEXT,
@@ -75,66 +70,29 @@ def init_db():
         qty INTEGER, factor REAL,
         area REAL, gauge TEXT)''')
 
-c.execute('''CREATE TABLE IF NOT EXISTS enquiry_progress (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    enquiry_id TEXT,
-    vendor TEXT,
-    location TEXT,
-    start_date TEXT,
-    end_date TEXT,
-    incharge TEXT,
-    stage TEXT,
-    status TEXT,
-    remarks TEXT
-)''')
+    # Enquiry Progress table
+    c.execute('''CREATE TABLE IF NOT EXISTS enquiry_progress (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        enquiry_id TEXT,
+        vendor TEXT,
+        location TEXT,
+        start_date TEXT,
+        end_date TEXT,
+        incharge TEXT,
+        stage TEXT,
+        status TEXT,
+        remarks TEXT
+    )''')
 
     conn.commit()
     conn.close()
 
 init_db()
 
-# ---------- ROUTES PART 1 ----------
-
+# ---------- ROUTES ----------
 @app.route('/')
 def login():
     return render_template('login.html')
-
-@app.route('/dashboard')
-def dashboard():
-    if 'user' not in session:
-        return redirect(url_for('login'))
-    return render_template('dashboard.html')
-
-
-@app.route('/enquiry_progress')
-def enquiry_progress():
-    if 'user' not in session:
-        return redirect(url_for('login'))
-
-    conn = sqlite3.connect(DB_NAME)
-    conn.row_factory = sqlite3.Row  # So we can access columns by name
-    c = conn.cursor()
-    c.execute('SELECT * FROM enquiry_progress')
-    rows = c.fetchall()
-    conn.close()
-
-    return render_template('enquiry_progress.html', progress_data=rows)
-
-
-@app.route('/add_dummy_enquiry')
-def add_dummy_enquiry():
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute('''INSERT INTO enquiry_progress 
-        (enquiry_id, vendor, location, start_date, end_date, incharge, stage, status, remarks) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-        ('ENQ001', 'VendorX', 'Chennai', '2025-08-01', '2025-08-15', 'John Doe', 'Drawing', 'In Progress', 'Initial design phase'))
-    conn.commit()
-    conn.close()
-    return "Dummy enquiry added!"
-
-
-# ---------- AUTH ----------
 
 @app.route('/login', methods=['POST'])
 def do_login():
@@ -155,41 +113,42 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
+@app.route('/dashboard')
+def dashboard():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    return render_template('dashboard.html')
 
+@app.route('/enquiry_progress')
+def enquiry_progress():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    conn = sqlite3.connect(DB_NAME)
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('SELECT * FROM enquiry_progress')
+    rows = c.fetchall()
+    conn.close()
+    return render_template('enquiry_progress.html', progress_data=rows)
+
+@app.route('/add_dummy_enquiry')
+def add_dummy_enquiry():
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute('''INSERT INTO enquiry_progress 
+        (enquiry_id, vendor, location, start_date, end_date, incharge, stage, status, remarks) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+        ('ENQ001', 'VendorX', 'Chennai', '2025-08-01', '2025-08-15', 'John Doe', 'Drawing', 'In Progress', 'Initial design phase'))
+    conn.commit()
+    conn.close()
+    return "Dummy enquiry added!"
 
 @app.route('/employee_registration', methods=['GET', 'POST'])
 def employee_registration():
     if 'user' not in session:
         return redirect(url_for('login'))
-
     if request.method == 'POST':
-        data = {
-            'name': request.form['name'],
-            'dob': request.form['dob'],
-            'gender': request.form['gender'],
-            'marital_status': request.form['marital_status'],
-            'aadhaar': request.form['aadhaar'],
-            'pan': request.form['pan'],
-            'esi': request.form.get('esi'),
-            'designation': request.form['designation'],
-            'location': request.form['location'],
-            'doj': request.form['doj'],
-            'employment_type': request.form['employment_type'],
-            'bank_name': request.form.get('bank_name'),
-            'branch': request.form.get('branch'),
-            'account_no': request.form.get('account_no'),
-            'ifsc': request.form.get('ifsc'),
-            'emergency_name': request.form.get('emergency_name'),
-            'emergency_relation': request.form.get('emergency_relation'),
-            'emergency_mobile': request.form.get('emergency_mobile'),
-            'blood_group': request.form.get('blood_group'),
-            'allergies': request.form.get('allergies'),
-            'medical_conditions': request.form.get('medical_conditions'),
-            'reference_name': request.form.get('reference_name'),
-            'reference_mobile': request.form.get('reference_mobile'),
-            'reference_relation': request.form.get('reference_relation')
-        }
-
+        data = {key: request.form.get(key) for key in request.form}
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
         c.execute('''INSERT INTO employees (
@@ -204,36 +163,23 @@ def employee_registration():
         conn.commit()
         conn.close()
         return redirect(url_for('dashboard'))
-
     return render_template('employee_registration.html')
-
-
 
 @app.route('/vendor_registration', methods=['GET', 'POST'])
 def vendor_registration():
     if 'user' not in session:
         return redirect(url_for('login'))
     if request.method == 'POST':
-        name = request.form['name']
-        gst = request.form['gst']
-        pan = request.form['pan']
-        bank_name = request.form['bank_name']
-        branch = request.form['branch']
-        account_no = request.form['account_no']
-        ifsc = request.form['ifsc']
-        address = request.form['address']
+        data = {key: request.form.get(key) for key in request.form}
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
         c.execute('''INSERT INTO vendors (name, gst, pan, bank_name, branch, account_no, ifsc, address)
                      VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
-                  (name, gst, pan, bank_name, branch, account_no, ifsc, address))
+                  tuple(data.values()))
         conn.commit()
         conn.close()
         return redirect(url_for('dashboard'))
     return render_template('vendor_registration.html')
-
-
-# ---------- PROJECT & MEASUREMENT ----------
 
 @app.route('/new_project', methods=['GET', 'POST'])
 def new_project():
@@ -263,20 +209,18 @@ def measurement_sheet():
     projects = c.fetchall()
 
     if request.method == 'POST':
-        project_id = request.form['project_id']
-        duct_no = request.form['duct_no']
-        duct_type = request.form['duct_type']
-        w1 = float(request.form['w1'])
-        h1 = float(request.form['h1'])
-        w2 = float(request.form.get('w2', 0) or 0)
-        h2 = float(request.form.get('h2', 0) or 0)
-        length = float(request.form['length'])
-        degree = float(request.form.get('degree', 0) or 0)
-        qty = int(request.form['qty'])
-        factor = float(request.form.get('factor', 1) or 1)
-        gauge = request.form['gauge']
+        form = request.form
+        w1 = float(form['w1'])
+        h1 = float(form['h1'])
+        w2 = float(form.get('w2') or 0)
+        h2 = float(form.get('h2') or 0)
+        length = float(form['length'])
+        degree = float(form.get('degree') or 0)
+        qty = int(form['qty'])
+        factor = float(form.get('factor') or 1)
+        gauge = form['gauge']
+        duct_type = form['duct_type']
 
-        # ✅ EXACT AREA FORMULAS:
         area = 0
         if duct_type == 'ST':
             area = 2 * (w1 + h1) / 1000 * (length / 1000) * qty
@@ -294,18 +238,15 @@ def measurement_sheet():
             area = 2 * (w1 + h1) / 1000 * ((h1 / 2) / 1000 + (length / 1000) * math.pi * (degree / 180)) * qty * factor
 
         c.execute('''INSERT INTO measurements 
-                    (project_id, duct_no, duct_type, w1, h1, w2, h2, length, degree, qty, factor, area, gauge)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-                  (project_id, duct_no, duct_type, w1, h1, w2, h2, length, degree, qty, factor, area, gauge))
+            (project_id, duct_no, duct_type, w1, h1, w2, h2, length, degree, qty, factor, area, gauge)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+            (form['project_id'], form['duct_no'], duct_type, w1, h1, w2, h2, length, degree, qty, factor, area, gauge))
         conn.commit()
         conn.close()
         return redirect(url_for('dashboard'))
 
     conn.close()
     return render_template('measurement_sheet.html', projects=projects)
-
-
-# ---------- PRODUCTION SUMMARY & PROGRESS ----------
 
 @app.route('/production_summary')
 def production_summary():
@@ -330,12 +271,6 @@ def enquiry_summary():
         return redirect(url_for('login'))
     return render_template('enquiry_summary.html')
 
-@app.route('/enquiry_progress')
-def enquiry_progress():
-    if 'user' not in session:
-        return redirect(url_for('login'))
-    return render_template('enquiry_progress.html')
-
 @app.route('/production_project')
 def production_project():
     if 'user' not in session:
@@ -356,8 +291,6 @@ def create_admin():
     conn.close()
     return "Admin user created!"
 
-# ---------- RUN APP ----------
-
+# ---------- RUN ----------
 if __name__ == '__main__':
     app.run(debug=True)
-    
