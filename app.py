@@ -38,11 +38,6 @@ def login():
     return render_template('login.html')
 
 
-@app.route('/dashboard')
-def dashboard():
-    if 'user' not in session:
-        return redirect(url_for('login'))
-    return render_template('dashboard.html')
 
 # =====================
 # Vendor Registration
@@ -63,7 +58,7 @@ def register_vendor():
             INSERT INTO vendors (vendor_name, gst, pan, bank_name, branch, account_no, ifsc)
             VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id
         """, (vendor_name, gst, pan, bank_name, branch, account_no, ifsc))
-        vendor_id = cur.fetchone()[0]
+        vendor_id = cursor.fetchone()[0]
 
         for data in communication_data:
             name, mobile, email, designation = data.split('|')
@@ -125,10 +120,10 @@ def new_project():
         return redirect(url_for('new_project'))
 
     cursor.execute("SELECT id, vendor_name FROM vendors")
-    vendors = cur.fetchall()
+    vendors = cursor.fetchall()
 
     cur.execute("SELECT * FROM projects ORDER BY id DESC")
-    all_projects = cur.fetchall()
+    all_projects = cursor.fetchall()
 
     return render_template('new_project.html', vendors=vendors, all_projects=all_projects)
 
