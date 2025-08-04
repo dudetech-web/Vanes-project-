@@ -197,9 +197,19 @@ def enquiry_summary():
 def production_project():
     return "Production New Project Page"
 
-@app.route('/production_progress')
-def production_progress():
-    return "Production Progress Table Page"
+@app.route('/production_progress', methods=['GET', 'POST'])
+def production_progress_view():
+    if request.method == 'POST':
+        enquiry_id = request.form['enquiry_id']
+        new_status = request.form['status']
+        # Update status in the dummy list
+        for project in production_progress:
+            if project['enquiry_id'] == enquiry_id:
+                project['status'] = new_status
+                break
+        return redirect(url_for('production_progress_view'))
+
+    return render_template('production_progress.html', progress_data=production_progress)
 
 @app.route('/production_summary')
 def production_summary():
