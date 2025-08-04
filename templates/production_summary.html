@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Production Summary</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 30px;
+            background: #f4f4f4;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .chart-container {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+        canvas {
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin: 20px;
+        }
+        .signature-section {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 60px;
+        }
+        .signature-block {
+            text-align: center;
+        }
+        .signature-line {
+            margin-top: 60px;
+            border-top: 1px solid #000;
+            width: 220px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Production Summary</h1>
+
+    <div class="chart-container">
+        <div>
+            <h3 style="text-align:center;">Gauge Distribution</h3>
+            <canvas id="barChart" width="400" height="300"></canvas>
+        </div>
+        <div>
+            <h3 style="text-align:center;">Project Status</h3>
+            <canvas id="pieChart" width="400" height="300"></canvas>
+        </div>
+    </div>
+
+    <div class="signature-section">
+        <div class="signature-block">
+            <div class="signature-line"></div>
+            <p>Project Manager</p>
+        </div>
+        <div class="signature-block">
+            <div class="signature-line"></div>
+            <p>Managing Director</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Data from Flask
+        const gaugeData = {{ gauge_count | tojson }};
+        const statusData = {{ status_count | tojson }};
+
+        // Bar Chart for Gauges
+        const barCtx = document.getElementById('barChart').getContext('2d');
+        new Chart(barCtx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(gaugeData),
+                datasets: [{
+                    label: 'No. of Ducts',
+                    data: Object.values(gaugeData),
+                    backgroundColor: ['#4CAF50', '#FFC107', '#2196F3', '#F44336'],
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Pie Chart for Status
+        const pieCtx = document.getElementById('pieChart').getContext('2d');
+        new Chart(pieCtx, {
+            type: 'pie',
+            data: {
+                labels: Object.keys(statusData),
+                datasets: [{
+                    data: Object.values(statusData),
+                    backgroundColor: ['#2196F3', '#4CAF50', '#FFC107']
+                }]
+            },
+            options: {
+                responsive: true
+            }
+        });
+    </script>
+
+</body>
+</html>
