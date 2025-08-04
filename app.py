@@ -160,7 +160,32 @@ def add_measurement_sheet(enquiry_id):
 
 @app.route('/enquiry_progress')
 def enquiry_progress():
-    return "Enquiry Progress Table Page"
+    # Dummy project progress data (you can later fetch from DB)
+    progress_data = [
+        {
+            'enquiry_id': 'VE/TN/2526/E001',
+            'vendor': 'ABC Ducts Ltd',
+            'location': 'Chennai',
+            'start_date': '2025-08-01',
+            'end_date': '2025-09-15',
+            'incharge': 'Ravi Kumar',
+            'stage': 'Drawing',
+            'status': 'In Progress',
+            'remarks': '-'
+        },
+        {
+            'enquiry_id': 'VE/TN/2526/E002',
+            'vendor': 'SteelFab Solutions',
+            'location': 'Bangalore',
+            'start_date': '2025-08-03',
+            'end_date': '2025-09-20',
+            'incharge': 'Anita Joshi',
+            'stage': 'Production',
+            'status': 'Completed',
+            'remarks': 'Ready for dispatch'
+        }
+    ]
+    return render_template('enquiry_progress.html', progress_data=progress_data)"
 
 @app.route('/enquiry_summary')
 def enquiry_summary():
