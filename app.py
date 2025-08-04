@@ -1,5 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from datetime import datetime
+import pandas as pd
+from flask import send_file
+import io
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -296,5 +299,81 @@ def employee_registration():
         return redirect(url_for('dashboard'))
     return render_template('employee_registration.html')
 
+
+@app.route('/add_measurement_sheet', methods=['GET', 'POST'])
+def add_measurement_sheet():
+    return render_template('measurement_sheet.html', entries=measurement_entries)
+
+@app.route('/add_entry', methods=['POST'])
+def add_entry():
+    data = request.form.to_dict()
+    area = calculate_area(data)
+    gauge = assign_gauge(area)
+    data['area'] = area
+    data['gauge'] = gauge
+    measurement_entries.append(data)
+    return jsonify({'status': 'success', 'area': area, 'gauge': gauge, 'entries': measurement_entries})
+@app.route('/save_duct_entry', methods=['POST'])
+def save_duct_entry():
+    data = request.get_json()
+    # Extract all fields from `data`
+    # Perform area calculation based on `duct_type` using the formulas
+    # Save the record to database or in-memory list
+    # Return updated list as JSON
+    return jsonify(updated_data)
+
+@app.route('/delete_entry/<int:index>', methods=['POST'])
+def delete_entry(index):
+    if 0 <= index < len(measurement_entries):
+        measurement_entries.pop(index)
+        return jsonify({'status': 'success'})
+    return jsonify({'status': 'error', 'message': 'Invalid index'})
+
+
+
+
+@app.route('/export_excel', methods=['GET'])
+def export_excel():
+    if not measurement_entries:
+        return "No data", 400
+    df = pd.DataFrame(measurement_entries)
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False, sheet_name='Measurement Sheet')
+    output.seek(0)
+    return send_file(output, download_name='measurement_sheet.xlsx', as_attachment=True)
+
+    
+@app.route('/export_pdf')
+def export_pdf():
+    # Fetch all entries
+    # Render to HTML and convert to PDF using WeasyPrint / xhtml2pdf
+    # Return as downloadable PDF
+
+@app.route('/submit_measurements', methods=['POST'])
+def submit_measurements():
+    # Here you could write to a database; for now we just clear
+    measurement_entries.clear()
+    return jsonify({'status': 'submitted'})
+
+
+@app.route('/print_measurement')
+def print_measurement():
+    # Render print-friendly version of measurement sheet
+    return render_template('print_measurement.html', data=your_data)
+
+
+
+
+@app.route('/get_timestamp', methods=['POST'])
+def get_timestamp():
+    role = request.form.get('role')
+    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    labels = {
+        'prepared': 'Prepared by Design Engineer',
+        'checked': 'Checked by Project Manager',
+        'approved': 'Approved by MD'
+    }
+    return jsonify({'label': labels.get(role, 'Unknown'), 'timestamp': now})
 if __name__ == '__main__':
     app.run(debug=True)
