@@ -4,231 +4,226 @@
     <title>New Project</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: Arial;
             margin: 20px;
+            background-color: #f8f9fa;
         }
-        .form-section {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
+        h2 {
+            margin-bottom: 10px;
         }
-        .form-group {
-            flex: 1 1 300px;
-            display: flex;
-            flex-direction: column;
-        }
-        label {
-            font-weight: bold;
-        }
-        input, textarea {
-            padding: 6px;
-            margin-top: 5px;
-            font-size: 14px;
-        }
-        .vendor-dropdown {
-            position: relative;
-        }
-        .vendor-search {
+        input, select, textarea, button {
+            margin: 5px 0;
             padding: 6px;
             width: 100%;
-            box-sizing: border-box;
         }
-        .vendor-list {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
+        .form-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
             background: #fff;
-            border: 1px solid #ccc;
-            max-height: 150px;
-            overflow-y: auto;
-            z-index: 1000;
-            display: none;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 0 10px #ccc;
+            margin-bottom: 20px;
         }
-        .vendor-list div {
-            padding: 8px;
-            cursor: pointer;
-        }
-        .vendor-list div:hover {
-            background-color: #f0f0f0;
+        .button-group {
+            text-align: right;
+            margin-top: 10px;
         }
         table {
             width: 100%;
-            margin-top: 20px;
             border-collapse: collapse;
-        }
-        table, th, td {
-            border: 1px solid #ccc;
+            margin-top: 25px;
         }
         th, td {
+            border: 1px solid #ccc;
             padding: 8px;
-            text-align: left;
         }
-        button {
-            padding: 6px 12px;
-            margin: 5px 0;
+        th {
+            background-color: #e9ecef;
+        }
+        .actions button {
+            margin-right: 5px;
+        }
+        .signatures div {
+            margin: 10px 0;
+        }
+        .dropdown {
+            position: relative;
+        }
+        .dropdown-search {
+            position: absolute;
+            background: white;
+            border: 1px solid #ccc;
+            max-height: 150px;
+            overflow-y: auto;
+            width: 100%;
+            z-index: 100;
+        }
+        .dropdown-search div {
+            padding: 6px;
+            cursor: pointer;
+        }
+        .dropdown-search div:hover {
+            background: #f1f1f1;
         }
     </style>
 </head>
 <body>
-<h2>New Project</h2>
 
-<form method="POST" action="/new_project">
-    <div class="form-section">
-        <div class="form-group">
-            <label>Enquiry ID</label>
-            <input type="text" name="enquiry_id" id="enquiry_id" readonly value="{{ enquiry_id }}">
-        </div>
+    <h2>New Project</h2>
 
-        <div class="form-group vendor-dropdown">
-            <label>Vendor Name</label>
-            <input type="text" class="vendor-search" placeholder="Search Vendor..." oninput="filterVendors(this.value)" onclick="toggleVendorList()" readonly>
-            <div class="vendor-list" id="vendorList">
-                {% for vendor in vendors %}
-                <div onclick="selectVendor('{{ vendor.vendor_name }}', '{{ vendor.gst }}', '{{ vendor.branch }}')">
-                    {{ vendor.vendor_name }}
-                </div>
-                {% endfor %}
+    <form method="post">
+        <div class="form-section">
+            <div>
+                <label>Enquiry ID</label>
+                <input type="text" name="enquiry_id" value="VE/TN/2526/E001" readonly>
+
+                <label>Quotation</label>
+                <input type="text" name="quotation">
+
+                <label>Start Date</label>
+                <input type="date" name="start_date">
+
+                <label>End Date</label>
+                <input type="date" name="end_date">
+
+                <label>Project Location</label>
+                <input type="text" name="project_location">
+
+                <label>Source Drawing</label>
+                <input type="file" name="drawing">
             </div>
-            <input type="hidden" name="vendor_name" id="vendor_name">
+            <div>
+                <label>Vendor Name</label>
+                <div class="dropdown">
+                    <input type="text" id="vendorSearch" onkeyup="filterVendors()" placeholder="Search vendors...">
+                    <div id="vendorDropdown" class="dropdown-search"></div>
+                </div>
+
+                <label>GST No</label>
+                <input type="text" id="gst_no" readonly>
+
+                <label>Address</label>
+                <textarea id="vendor_address" rows="3" readonly></textarea>
+
+                <label>Email</label>
+                <input type="email" name="email">
+
+                <label>Contact Number</label>
+                <input type="text" name="contact">
+
+                <label>Project Incharge</label>
+                <input type="text" name="incharge">
+
+                <label>Notes</label>
+                <textarea name="notes" rows="2"></textarea>
+            </div>
         </div>
 
-        <div class="form-group">
-            <label>GST No</label>
-            <input type="text" name="gst" id="gst" readonly>
+        <div class="button-group">
+            <button type="submit">Save</button>
+            <button type="reset">Cancel</button>
+            <a href="/dashboard"><button type="button">Back</button></a>
         </div>
+    </form>
 
-        <div class="form-group">
-            <label>Address</label>
-            <textarea name="address" id="address" readonly></textarea>
-        </div>
+    <h3>Projects Table</h3>
+    <table id="projectsTable">
+        <thead>
+            <tr>
+                <th>Enquiry ID</th>
+                <th>Quotation</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Location</th>
+                <th>Incharge</th>
+                <th>Contact</th>
+                <th>Email</th>
+                <th>Notes</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="projectBody">
+            <!-- Example dummy row -->
+            <tr>
+                <td contenteditable="false">VE/TN/2526/E001</td>
+                <td contenteditable="true">Q-001</td>
+                <td contenteditable="true">2025-08-01</td>
+                <td contenteditable="true">2025-08-20</td>
+                <td contenteditable="true">Chennai</td>
+                <td contenteditable="true">Ravi</td>
+                <td contenteditable="true">9876543210</td>
+                <td contenteditable="true">ravi@xyz.com</td>
+                <td contenteditable="true">Urgent delivery</td>
+                <td class="actions">
+                    <button onclick="saveRow(this)">Save</button>
+                    <button onclick="deleteRow(this)">Delete</button>
+                    <button onclick="alert('Add Measurement Sheet clicked')">Add Sheet</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
 
-        <div class="form-group">
-            <label>Quotation</label>
-            <input type="text" name="quotation">
-        </div>
-
-        <div class="form-group">
-            <label>Start Date</label>
-            <input type="date" name="start_date">
-        </div>
-
-        <div class="form-group">
-            <label>End Date</label>
-            <input type="date" name="end_date">
-        </div>
-
-        <div class="form-group">
-            <label>Project Location</label>
-            <input type="text" name="project_location">
-        </div>
-
-        <div class="form-group">
-            <label>Email</label>
-            <input type="email" name="email">
-        </div>
-
-        <div class="form-group">
-            <label>Contact Number</label>
-            <input type="text" name="contact_number">
-        </div>
-
-        <div class="form-group">
-            <label>Project Incharge</label>
-            <input type="text" name="project_incharge">
-        </div>
-
-        <div class="form-group">
-            <label>Notes</label>
-            <textarea name="notes"></textarea>
-        </div>
+    <div class="button-group">
+        <button onclick="alert('Export to PDF')">Export PDF</button>
+        <button onclick="alert('Export to Excel')">Export Excel</button>
+        <button onclick="alert('Data submitted')">Submit</button>
+        <button onclick="window.print()">Print</button>
     </div>
 
-    <button type="submit">Save</button>
-    <button type="reset">Cancel</button>
-</form>
+    <h3>Approvals</h3>
+    <div class="signatures">
+        <div><button onclick="fillApproval('prepared')">Prepared By</button> <span id="prepared"></span></div>
+        <div><button onclick="fillApproval('checked')">Checked By</button> <span id="checked"></span></div>
+        <div><button onclick="fillApproval('approved')">Approved By</button> <span id="approved"></span></div>
+    </div>
 
-<hr>
+    <script>
+        const vendors = [
+            {name: 'ABC Ducts Ltd', gst: '29ABCDE1234F2Z5', address: 'MG Road, Bangalore'},
+            {name: 'SteelFab Solutions', gst: '27STFAB6789G1Z6', address: 'Indiranagar, Bangalore'}
+        ];
 
-<h3>All Projects</h3>
-<table>
-    <thead>
-        <tr>
-            <th>Enquiry ID</th>
-            <th>Vendor</th>
-            <th>Quotation</th>
-            <th>Start</th>
-            <th>End</th>
-            <th>Location</th>
-            <th>Incharge</th>
-            <th>Contact</th>
-            <th>Email</th>
-            <th>Notes</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for p in projects %}
-        <tr>
-            <td>{{ p.enquiry_id }}</td>
-            <td>{{ p.vendor_name }}</td>
-            <td contenteditable onblur="saveField(this, '{{ p.enquiry_id }}', 'quotation')">{{ p.quotation }}</td>
-            <td contenteditable onblur="saveField(this, '{{ p.enquiry_id }}', 'start_date')">{{ p.start_date }}</td>
-            <td contenteditable onblur="saveField(this, '{{ p.enquiry_id }}', 'end_date')">{{ p.end_date }}</td>
-            <td contenteditable onblur="saveField(this, '{{ p.enquiry_id }}', 'project_location')">{{ p.project_location }}</td>
-            <td contenteditable onblur="saveField(this, '{{ p.enquiry_id }}', 'project_incharge')">{{ p.project_incharge }}</td>
-            <td contenteditable onblur="saveField(this, '{{ p.enquiry_id }}', 'contact_number')">{{ p.contact_number }}</td>
-            <td contenteditable onblur="saveField(this, '{{ p.enquiry_id }}', 'email')">{{ p.email }}</td>
-            <td contenteditable onblur="saveField(this, '{{ p.enquiry_id }}', 'notes')">{{ p.notes }}</td>
-            <td>
-                <button onclick="deleteProject('{{ p.enquiry_id }}')">Delete</button>
-                <a href="/add_measurement_sheet/{{ p.enquiry_id }}"><button>Add Measurement Sheet</button></a>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-
-<script>
-    function toggleVendorList() {
-        const list = document.getElementById('vendorList');
-        list.style.display = list.style.display === 'block' ? 'none' : 'block';
-    }
-
-    function filterVendors(value) {
-        const items = document.querySelectorAll('#vendorList div');
-        items.forEach(item => {
-            item.style.display = item.innerText.toLowerCase().includes(value.toLowerCase()) ? 'block' : 'none';
-        });
-    }
-
-    function selectVendor(name, gst, address) {
-        document.querySelector('.vendor-search').value = name;
-        document.getElementById('vendor_name').value = name;
-        document.getElementById('gst').value = gst;
-        document.getElementById('address').value = address;
-        document.getElementById('vendorList').style.display = 'none';
-    }
-
-    function saveField(cell, enquiryId, field) {
-        const value = cell.innerText;
-        fetch('/edit_project', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ enquiry_id: enquiryId, field: field, value: value })
-        });
-    }
-
-    function deleteProject(enquiryId) {
-        if (confirm("Are you sure you want to delete this project?")) {
-            fetch('/delete_project', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ enquiry_id: enquiryId })
-            }).then(() => window.location.reload());
+        function filterVendors() {
+            const input = document.getElementById("vendorSearch");
+            const filter = input.value.toLowerCase();
+            const dropdown = document.getElementById("vendorDropdown");
+            dropdown.innerHTML = '';
+            vendors.forEach(v => {
+                if (v.name.toLowerCase().includes(filter)) {
+                    const div = document.createElement("div");
+                    div.textContent = v.name;
+                    div.onclick = () => {
+                        input.value = v.name;
+                        document.getElementById("gst_no").value = v.gst;
+                        document.getElementById("vendor_address").value = v.address;
+                        dropdown.innerHTML = '';
+                    };
+                    dropdown.appendChild(div);
+                }
+            });
         }
-    }
-</script>
+
+        function saveRow(btn) {
+            alert("Row saved");
+        }
+
+        function deleteRow(btn) {
+            if (confirm("Are you sure you want to delete this row?")) {
+                const row = btn.closest("tr");
+                row.remove();
+            }
+        }
+
+        function fillApproval(type) {
+            const now = new Date().toLocaleString();
+            let role = '';
+            if (type === 'prepared') role = 'Prepared by Design Engineer';
+            if (type === 'checked') role = 'Checked by Project Manager';
+            if (type === 'approved') role = 'Approved by MD';
+            document.getElementById(type).textContent = `${role} on ${now}`;
+        }
+    </script>
 </body>
 </html>
-
