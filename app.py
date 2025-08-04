@@ -3,6 +3,7 @@ from datetime import datetime
 import pandas as pd
 from flask import send_file
 import io
+import math
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -47,6 +48,61 @@ projects_db = []
 production_progress = []
 enquiry_projects = []
 
+
+
+
+def calculate_area(duct_type, w1, h1, w2, h2, length, degree, qty, factor):
+    try:
+        w1 = float(w1)
+        h1 = float(h1)
+        w2 = float(w2)
+        h2 = float(h2)
+        length = float(length)
+        degree = float(degree)
+        qty = int(qty)
+        factor = float(factor)
+    except:
+        return 0
+
+    if duct_type == "st":
+        return round(2 * (w1 + h1) / 1000 * (length / 1000) * qty, 3)
+    elif duct_type == "red":
+        return round((w1 + h1 + w2 + h2) / 1000 * (length / 1000) * qty * factor, 3)
+    elif duct_type == "dm":
+        return round((w1 * h1) / 1_000_000 * qty, 3)
+    elif duct_type == "offset":
+        return round((w1 + h1 + w2 + h2) / 1000 * ((length + degree) / 1000) * qty * factor, 3)
+    elif duct_type == "shoe":
+        return round((w1 + h1) * 2 / 1000 * (length / 1000) * qty * factor, 3)
+    elif duct_type == "vanes":
+        return round((w1 / 1000) * (2 * math.pi * (w1 / 1000) / 4) * qty, 3)
+    elif duct_type == "elb":
+        arc = ((h1 / 2) / 1000 + (length / 1000) * math.pi * (degree / 180))
+        return round(2 * (w1 + h1) / 1000 * arc * qty * factor, 3)
+    else:
+        return 0
+
+def assign_gauge(area):
+    if area <= 750:
+        return '24g'
+    elif area <= 1200:
+        return '22g'
+    elif area <= 1800:
+        return '20g'
+    else:
+        return '18g'
+
+def calculate_accessories(w1, h1, length, qty, gauge):
+    gasket = round(((w1 + h1) * 2 + length) * qty / 1000, 2)
+    cleat_multiplier = {
+        '24g': 4,
+        '22g': 8,
+        '20g': 10,
+        '18g': 12
+    }
+    cleat = qty * cleat_multiplier.get(gauge, 0)
+    cornerpieces = "8 pieces"
+    return gasket, cleat, cornerpieces
 # ---------- Auth ----------
 @app.route('/', methods=['GET', 'POST'])
 def login():
