@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 import sqlite3
 import math
+from datetime import datetime  # Make sure this import is at the top
+
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
@@ -181,10 +183,12 @@ def vendor_registration():
         return redirect(url_for('dashboard'))
     return render_template('vendor_registration.html')
 
+
 @app.route('/new_project', methods=['GET', 'POST'])
 def new_project():
     if 'user' not in session:
         return redirect(url_for('login'))
+
     if request.method == 'POST':
         name = request.form['name']
         location = request.form['location']
@@ -197,8 +201,9 @@ def new_project():
         conn.commit()
         conn.close()
         return redirect(url_for('dashboard'))
-    return render_template('new_project.html')
 
+    now = datetime.now()
+    return render_template('new_project.html', now=now)
 @app.route('/measurement_sheet', methods=['GET', 'POST'])
 def measurement_sheet():
     if 'user' not in session:
