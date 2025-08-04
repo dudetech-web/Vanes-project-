@@ -7,7 +7,7 @@ from fpdf import FPDF
 import xlsxwriter
 import io
 
-app = Flask(__name__)  # Corrected from 'name' to '__name__'
+app = Flask(__name__)  # Use __name__, not 'name'
 app.secret_key = 'your_secret_key'
 
 # Database connection using DATABASE_URL
@@ -16,6 +16,7 @@ DATABASE_URL = os.environ.get(
     "DATABASE_URL",
     "postgresql://duct_vendor_app_user:6F8CX3mCEBU8E4azRCf0s6gdQeWaL9bq@dpg-d243r9qli9vc73ca99ag-a.singapore-postgres.render.com/duct_vendor_app"
 )
+
 url = up.urlparse(DATABASE_URL)
 
 conn = psycopg2.connect(
@@ -26,6 +27,8 @@ conn = psycopg2.connect(
     port=url.port
 )
 cursor = conn.cursor()
+
+# Now continue with your routes below...
 
 # Your routes continue from here...
 
