@@ -1,25 +1,15 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify
-from datetime import datetime
-import os
-import math
-import psycopg2
-from fpdf import FPDF
-import xlsxwriter
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, send_file import os import psycopg2 import urllib.parse as up from datetime import datetime from fpdf import FPDF import xlsxwriter import io
 
-app = Flask(__name__)
-app.secret_key = 'your_secret_key'
+app = Flask(name) app.secret_key = 'your_secret_key'
 
-# PostgreSQL connection
+Database connection using DATABASE_URL
 
-conn = psycopg2.connect(
-    dbname="duct_vendor_app",
-    user="duct_vendor_app_user",
-    password="6F8CX3mCEBU8E4azRCf0s6gdQeWaL9bq",
-    host="dpg-d243r9qli9vc73ca99ag-a.singapore-postgres.render.com",
-    port=5432
+up.uses_netloc.append("postgres") DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://duct_vendor_app_user:6F8CX3mCEBU8E4azRCf0s6gdQeWaL9bq@dpg-d243r9qli9vc73ca99ag-a.singapore-postgres.render.com/duct_vendor_app") url = up.urlparse(DATABASE_URL)
 
-)
-cur = conn.cursor()
+conn = psycopg2.connect( dbname=url.path[1:], user=url.username, password=url.password, host=url.hostname, port=url.port ) cursor = conn.cursor()
+
+#Continue with all your existing routes and logic below...
+
 
 @app.route('/')
 def login():
