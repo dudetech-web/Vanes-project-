@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Vendor Registration</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f4f4f4;
+            padding: 40px;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            max-width: 800px;
+            margin: auto;
+            border-radius: 12px;
+            box-shadow: 0 0 12px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        label {
+            font-weight: 500;
+            display: block;
+            margin-top: 15px;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px 10px;
+            margin-top: 5px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background-color: #a71d2a;
+        }
+
+        .btn-group {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .back-btn {
+            background-color: #6c757d;
+        }
+
+        .back-btn:hover {
+            background-color: #4e555b;
+        }
+
+    </style>
+    <script>
+        function addRow() {
+            const table = document.getElementById('communication-table');
+            const row = table.insertRow();
+            row.innerHTML = `
+                <td><input type="text" name="contact_name[]" required></td>
+                <td><input type="text" name="mobile[]" required></td>
+                <td><input type="email" name="email[]" required></td>
+                <td><input type="text" name="designation[]" required></td>
+                <td><button type="button" class="btn-danger" onclick="removeRow(this)">−</button></td>
+            `;
+        }
+
+        function removeRow(btn) {
+            const row = btn.closest("tr");
+            row.remove();
+        }
+    </script>
+</head>
+<body>
+<div class="container">
+    <h2>Vendor Registration</h2>
+    <form method="POST">
+        <!-- Vendor Details -->
+        <label>Vendor Name</label>
+        <input type="text" name="vendor_name" required>
+
+        <label>GST Number</label>
+        <input type="text" name="gst" required>
+
+        <label>PAN Number</label>
+        <input type="text" name="pan">
+
+        <!-- Bank Details -->
+        <label>Bank Name</label>
+        <input type="text" name="bank_name" required>
+
+        <label>Branch</label>
+        <input type="text" name="branch" required>
+
+        <label>Account Number</label>
+        <input type="text" name="account_no" required>
+
+        <label>IFSC Code</label>
+        <input type="text" name="ifsc" required>
+
+        <!-- Communication Details -->
+        <label>Communication Details</label>
+        <table id="communication-table">
+            <thead>
+                <tr>
+                    <th>Contact Name</th>
+                    <th>Mobile</th>
+                    <th>Email</th>
+                    <th>Designation</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><input type="text" name="contact_name[]" required></td>
+                    <td><input type="text" name="mobile[]" required></td>
+                    <td><input type="email" name="email[]" required></td>
+                    <td><input type="text" name="designation[]" required></td>
+                    <td><button type="button" class="btn-danger" onclick="removeRow(this)">−</button></td>
+                </tr>
+            </tbody>
+        </table>
+        <button type="button" onclick="addRow()">+ Add Row</button>
+
+        <!-- Buttons -->
+        <div class="btn-group">
+            <button type="submit">Save</button>
+            <button type="reset" class="btn-danger">Cancel</button>
+            <a href="{{ url_for('dashboard') }}"><button type="button" class="back-btn">Back</button></a>
+        </div>
+    </form>
+</div>
+</body>
+</html>
