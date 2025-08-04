@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Enquiry Summary</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f4f4f4;
+        }
+        h2 {
+            color: #333;
+        }
+        .chart-container {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+        canvas {
+            background-color: #fff;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+        .signatures {
+            margin-top: 40px;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        .signature-block {
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #0077cc;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .signature-text {
+            margin-top: 10px;
+            color: #222;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h2>Enquiry Summary</h2>
+
+    <div class="chart-container">
+        <div>
+            <h3>Project Area Summary</h3>
+            <canvas id="barChart" width="400" height="300"></canvas>
+        </div>
+        <div>
+            <h3>Duct Type Distribution</h3>
+            <canvas id="pieChart" width="300" height="300"></canvas>
+        </div>
+    </div>
+
+    <div class="signatures">
+        <h3>Approvals</h3>
+
+        <div class="signature-block">
+            <button onclick="addSignature('projectManager')">Checked by Project Manager</button>
+            <div id="projectManager" class="signature-text"></div>
+        </div>
+
+        <div class="signature-block">
+            <button onclick="addSignature('managingDirector')">Approved by Managing Director</button>
+            <div id="managingDirector" class="signature-text"></div>
+        </div>
+    </div>
+
+    <script>
+        // Dummy Bar Chart
+        new Chart(document.getElementById("barChart"), {
+            type: 'bar',
+            data: {
+                labels: ["Project A", "Project B", "Project C"],
+                datasets: [{
+                    label: 'Total Area (sq ft)',
+                    data: [1200, 800, 950],
+                    backgroundColor: ['#0077cc', '#00aaff', '#33cc99']
+                }]
+            },
+            options: {
+                responsive: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Dummy Pie Chart
+        new Chart(document.getElementById("pieChart"), {
+            type: 'pie',
+            data: {
+                labels: ['Straight', 'Elbow', 'Reducer', 'Offset'],
+                datasets: [{
+                    data: [40, 25, 20, 15],
+                    backgroundColor: ['#ff6384', '#36a2eb', '#ffcd56', '#4bc0c0']
+                }]
+            },
+            options: {
+                responsive: false
+            }
+        });
+
+        function addSignature(id) {
+            const role = {
+                projectManager: "✔ Checked by Project Manager",
+                managingDirector: "✔ Approved by Managing Director"
+            };
+            const now = new Date();
+            const timestamp = now.toLocaleString('en-IN', {
+                day: '2-digit', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit', hour12: true
+            });
+            document.getElementById(id).innerText = `${role[id]} on ${timestamp}`;
+        }
+    </script>
+</body>
+</html>
