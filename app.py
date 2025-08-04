@@ -216,7 +216,26 @@ def production_progress_view():
 
 @app.route('/production_summary')
 def production_summary():
-    return "Production Summary Page"
+    # Dummy data for demonstration
+    summary_data = [
+        {
+            'project_name': 'Project Alpha',
+            'status': 'Ongoing',
+            'start_date': '2025-07-01',
+            'end_date': '2025-08-10',
+            'total_ducts': 56,
+            'total_area': 845.5
+        },
+        {
+            'project_name': 'Project Beta',
+            'status': 'Completed',
+            'start_date': '2025-06-01',
+            'end_date': '2025-07-15',
+            'total_ducts': 73,
+            'total_area': 1024.3
+        }
+    ]
+    return render_template("production_summary.html", summary=summary_data)
 
 @app.route('/sheet_cutting')
 def sheet_cutting():
