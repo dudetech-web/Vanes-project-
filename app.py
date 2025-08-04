@@ -243,6 +243,15 @@ def production_project():
     conn.close()
     return render_template('production_project.html', projects=projects)
 
+@app.route('/create_admin')
+def create_admin():
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute("INSERT INTO users (username, password) VALUES (?, ?)", ('admin', 'password'))
+    conn.commit()
+    conn.close()
+    return "Admin user created!"
+
 # ---------- RUN APP ----------
 
 if __name__ == '__main__':
