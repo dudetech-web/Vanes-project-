@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard - Vanes Engineering Pvt Ltd</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      height: 100vh;
+    }
+
+    .sidebar {
+      width: 250px;
+      background-color: #2c3e50;
+      color: white;
+      padding: 20px;
+      height: 100%;
+      overflow-y: auto;
+    }
+
+    .sidebar h2 {
+      font-size: 18px;
+      margin-top: 20px;
+      border-bottom: 1px solid #555;
+      padding-bottom: 5px;
+    }
+
+    .sidebar a {
+      display: block;
+      color: #ecf0f1;
+      text-decoration: none;
+      margin: 8px 0;
+      padding: 6px 10px;
+      border-radius: 5px;
+    }
+
+    .sidebar a:hover {
+      background-color: #34495e;
+    }
+
+    .main-content {
+      flex: 1;
+      background-color: #f4f4f4;
+      padding: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .main-content h1 {
+      font-size: 28px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="sidebar">
+    <h2>Enquiry</h2>
+    <a href="/new_project">New Project</a>
+    <a href="/enquiry_progress">Progress Table</a>
+    <a href="/enquiry_summary">Summary</a>
+
+    <h2>Production</h2>
+    <a href="/production_project">New Project</a>
+    <a href="/production_progress">Progress Table</a>
+    <a href="/production_summary">Summary</a>
+    <a href="/sheet_cutting">Sheet Cutting</a>
+    <a href="/fabrication">Fabrication</a>
+    <a href="/dispatch">Dispatch</a>
+
+    <h2>Reports</h2>
+    <a href="/daily_reports">Daily Reports</a>
+    <a href="/weekly_reports">Weekly Reports</a>
+    <a href="/monthly_reports">Monthly Reports</a>
+
+    <h2>Registration</h2>
+    <a href="/employee_registration">Employee Registration</a>
+    <a href="/vendor_registration">Vendor Registration</a>
+  </div>
+
+  <div class="main-content">
+    <h1>Welcome to Vanes Engineering Pvt Ltd</h1>
+  </div>
+
+</body>
+</html>
