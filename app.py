@@ -88,3 +88,75 @@ def vendor_registration():
         vendors_db.append(vendor)
         return redirect(url_for('dashboard'))
     return render_template('vendor_registration.html')
+
+
+
+
+
+# --- Dashboard Route ---
+@app.route('/dashboard')
+def dashboard():
+    return render_template('dashboard.html')
+
+# --- Enquiry Module ---
+@app.route('/new_project')
+def new_project():
+    return "New Project Page"
+
+@app.route('/enquiry_progress')
+def enquiry_progress():
+    return "Enquiry Progress Table Page"
+
+@app.route('/enquiry_summary')
+def enquiry_summary():
+    return "Enquiry Summary Page"
+
+# --- Production Module ---
+@app.route('/production_project')
+def production_project():
+    return "Production New Project Page"
+
+@app.route('/production_progress')
+def production_progress():
+    return "Production Progress Table Page"
+
+@app.route('/production_summary')
+def production_summary():
+    return "Production Summary Page"
+
+@app.route('/sheet_cutting')
+def sheet_cutting():
+    return "Sheet Cutting Page"
+
+@app.route('/fabrication')
+def fabrication():
+    return "Fabrication Page"
+
+@app.route('/dispatch')
+def dispatch():
+    return "Dispatch Page"
+
+# --- Reports Module ---
+@app.route('/daily_reports')
+def daily_reports():
+    return "Daily Reports Page"
+
+@app.route('/weekly_reports')
+def weekly_reports():
+    return "Weekly Reports Page"
+
+@app.route('/monthly_reports')
+def monthly_reports():
+    return "Monthly Reports Page"
+
+# --- Registration Module ---
+@app.route('/employee_registration')
+def employee_registration():
+    return "Employee Registration Page"
+
+@app.route('/vendor_registration')
+def vendor_registration():
+    return "Vendor Registration Page"
+
+if __name__ == '__main__':
+    app.run(debug=True)
