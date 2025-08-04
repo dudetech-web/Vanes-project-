@@ -75,6 +75,19 @@ def init_db():
         qty INTEGER, factor REAL,
         area REAL, gauge TEXT)''')
 
+c.execute('''CREATE TABLE IF NOT EXISTS enquiry_progress (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    enquiry_id TEXT,
+    vendor TEXT,
+    location TEXT,
+    start_date TEXT,
+    end_date TEXT,
+    incharge TEXT,
+    stage TEXT,
+    status TEXT,
+    remarks TEXT
+)''')
+
     conn.commit()
     conn.close()
 
@@ -91,6 +104,34 @@ def dashboard():
     if 'user' not in session:
         return redirect(url_for('login'))
     return render_template('dashboard.html')
+
+
+@app.route('/enquiry_progress')
+def enquiry_progress():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+
+    conn = sqlite3.connect(DB_NAME)
+    conn.row_factory = sqlite3.Row  # So we can access columns by name
+    c = conn.cursor()
+    c.execute('SELECT * FROM enquiry_progress')
+    rows = c.fetchall()
+    conn.close()
+
+    return render_template('enquiry_progress.html', progress_data=rows)
+
+
+@app.route('/add_dummy_enquiry')
+def add_dummy_enquiry():
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute('''INSERT INTO enquiry_progress 
+        (enquiry_id, vendor, location, start_date, end_date, incharge, stage, status, remarks) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+        ('ENQ001', 'VendorX', 'Chennai', '2025-08-01', '2025-08-15', 'John Doe', 'Drawing', 'In Progress', 'Initial design phase'))
+    conn.commit()
+    conn.close()
+    return "Dummy enquiry added!"
 
 
 # ---------- AUTH ----------
