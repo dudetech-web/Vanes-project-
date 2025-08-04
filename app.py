@@ -261,9 +261,40 @@ def weekly_reports():
 def monthly_reports():
     return "Monthly Reports Page"
 
-@app.route('/employee_registration')
+@app.route('/employee_registration', methods=['GET', 'POST'])
 def employee_registration():
-    return "Employee Registration Page"
+    if request.method == 'POST':
+        data = {
+            "name": request.form['name'],
+            "dob": request.form['dob'],
+            "gender": request.form['gender'],
+            "marital_status": request.form['marital_status'],
+            "aadhaar": request.form['aadhaar'],
+            "pan": request.form['pan'],
+            "esi": request.form['esi'],
+            "designation": request.form['designation'],
+            "location": request.form['location'],
+            "doj": request.form['doj'],
+            "employment_type": request.form['employment_type'],
+            "bank_name": request.form['bank_name'],
+            "branch": request.form['branch'],
+            "account_no": request.form['account_no'],
+            "ifsc": request.form['ifsc'],
+            "emergency_name": request.form['emergency_name'],
+            "emergency_relation": request.form['emergency_relation'],
+            "emergency_mobile": request.form['emergency_mobile'],
+            "blood_group": request.form['blood_group'],
+            "allergies": request.form['allergies'],
+            "medical_conditions": request.form['medical_conditions'],
+            "reference_name": request.form['reference_name'],
+            "reference_mobile": request.form['reference_mobile'],
+            "reference_relation": request.form['reference_relation']
+        }
+        # Optional: Save `data` to your database here.
+        print("Received Employee Data:", data)
+        return redirect(url_for('dashboard'))  # or wherever you want to redirect after save
+
+    return render_template('employee_registration.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
