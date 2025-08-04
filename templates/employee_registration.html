@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Employee Registration</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        h2 {
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        form {
+            max-width: 900px;
+            margin: auto;
+            background-color: #f2f2f2;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .button-group {
+            text-align: center;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 25px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .row {
+            display: flex;
+            gap: 20px;
+        }
+
+        .column {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <h2>Employee Registration</h2>
+    <form method="POST">
+        <!-- Employee Info -->
+        <div class="section">
+            <h3>1. Employee Information</h3>
+            <div class="row">
+                <div class="column">
+                    <label>Full Name</label>
+                    <input type="text" name="name" required>
+                </div>
+                <div class="column">
+                    <label>Date of Birth</label>
+                    <input type="date" name="dob" required>
+                </div>
+            </div>
+            <div class="row">
+                <div class="column">
+                    <label>Gender</label>
+                    <select name="gender">
+                        <option>Male</option>
+                        <option>Female</option>
+                        <option>Other</option>
+                    </select>
+                </div>
+                <div class="column">
+                    <label>Marital Status</label>
+                    <select name="marital_status">
+                        <option>Single</option>
+                        <option>Married</option>
+                        <option>Divorced</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <div class="column">
+                    <label>Aadhaar Number</label>
+                    <input type="text" name="aadhaar" required>
+                </div>
+                <div class="column">
+                    <label>PAN Number</label>
+                    <input type="text" name="pan" required>
+                </div>
+            </div>
+            <div>
+                <label>ESI Number</label>
+                <input type="text" name="esi">
+            </div>
+        </div>
+
+        <!-- Job Info -->
+        <div class="section">
+            <h3>2. Job Information</h3>
+            <div class="row">
+                <div class="column">
+                    <label>Designation</label>
+                    <input type="text" name="designation" required>
+                </div>
+                <div class="column">
+                    <label>Work Location</label>
+                    <input type="text" name="location" required>
+                </div>
+            </div>
+            <div class="row">
+                <div class="column">
+                    <label>Date of Joining</label>
+                    <input type="date" name="doj" required>
+                </div>
+                <div class="column">
+                    <label>Employment Type</label>
+                    <select name="employment_type">
+                        <option>Permanent</option>
+                        <option>Contract</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bank Details -->
+        <div class="section">
+            <h3>3. Bank Details</h3>
+            <div class="row">
+                <div class="column">
+                    <label>Bank Name</label>
+                    <input type="text" name="bank_name">
+                </div>
+                <div class="column">
+                    <label>Branch</label>
+                    <input type="text" name="branch">
+                </div>
+            </div>
+            <div class="row">
+                <div class="column">
+                    <label>Account Number</label>
+                    <input type="text" name="account_no">
+                </div>
+                <div class="column">
+                    <label>IFSC Code</label>
+                    <input type="text" name="ifsc">
+                </div>
+            </div>
+        </div>
+
+        <!-- Emergency Contact -->
+        <div class="section">
+            <h3>4. Emergency Contact</h3>
+            <div class="row">
+                <div class="column">
+                    <label>Name</label>
+                    <input type="text" name="emergency_name">
+                </div>
+                <div class="column">
+                    <label>Relationship</label>
+                    <input type="text" name="emergency_relation">
+                </div>
+            </div>
+            <div>
+                <label>Mobile Number</label>
+                <input type="text" name="emergency_mobile">
+            </div>
+        </div>
+
+        <!-- Medical Info -->
+        <div class="section">
+            <h3>5. Medical Information</h3>
+            <div class="row">
+                <div class="column">
+                    <label>Blood Group</label>
+                    <input type="text" name="blood_group">
+                </div>
+                <div class="column">
+                    <label>Allergies</label>
+                    <input type="text" name="allergies">
+                </div>
+            </div>
+            <div>
+                <label>Existing Medical Conditions</label>
+                <input type="text" name="medical_conditions">
+            </div>
+        </div>
+
+        <!-- Reference -->
+        <div class="section">
+            <h3>6. Reference</h3>
+            <div class="row">
+                <div class="column">
+                    <label>Name</label>
+                    <input type="text" name="reference_name">
+                </div>
+                <div class="column">
+                    <label>Mobile Number</label>
+                    <input type="text" name="reference_mobile">
+                </div>
+            </div>
+            <div>
+                <label>Relationship</label>
+                <input type="text" name="reference_relation">
+            </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="button-group">
+            <button type="submit">Save</button>
+            <button type="reset">Cancel</button>
+            <button type="button" onclick="window.history.back()">Back</button>
+        </div>
+    </form>
+</body>
+</html>
