@@ -5,110 +5,178 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            padding: 30px;
-            background: #f4f4f4;
+            padding: 20px;
         }
-        h1 {
+        h2 {
             text-align: center;
-            margin-bottom: 40px;
         }
-        .chart-container {
+        .charts {
             display: flex;
             justify-content: space-around;
             flex-wrap: wrap;
+            margin-bottom: 30px;
         }
         canvas {
-            background: #fff;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            margin: 20px;
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 10px;
         }
-        .signature-section {
-            display: flex;
-            justify-content: space-around;
-            margin-top: 60px;
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 30px;
         }
-        .signature-block {
+        table, th, td {
+            border: 1px solid #aaa;
+        }
+        th, td {
+            padding: 10px;
             text-align: center;
         }
-        .signature-line {
-            margin-top: 60px;
+        .buttons {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .buttons button {
+            padding: 10px 15px;
+            background-color: #2b7cff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+        .buttons button:hover {
+            background-color: #1a5fd2;
+        }
+        .signatures {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            gap: 30px;
+        }
+        .sign-box {
+            flex: 1;
+            text-align: center;
             border-top: 1px solid #000;
-            width: 220px;
+            padding-top: 5px;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
 
-    <h1>Production Summary</h1>
+    <h2>Production Summary</h2>
 
-    <div class="chart-container">
+    <div class="charts">
         <div>
-            <h3 style="text-align:center;">Gauge Distribution</h3>
-            <canvas id="barChart" width="400" height="300"></canvas>
+            <h3>Gauge Distribution</h3>
+            <canvas id="barChart" width="300" height="250"></canvas>
         </div>
         <div>
-            <h3 style="text-align:center;">Project Status</h3>
-            <canvas id="pieChart" width="400" height="300"></canvas>
+            <h3>Project Status</h3>
+            <canvas id="pieChart" width="300" height="250"></canvas>
         </div>
     </div>
 
-    <div class="signature-section">
-        <div class="signature-block">
-            <div class="signature-line"></div>
-            <p>Project Manager</p>
-        </div>
-        <div class="signature-block">
-            <div class="signature-line"></div>
-            <p>Managing Director</p>
-        </div>
+    <table id="summaryTable">
+        <thead>
+            <tr>
+                <th>Project Name</th>
+                <th>Status</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Total Ducts</th>
+                <th>Total Area</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Project Alpha</td>
+                <td>Ongoing</td>
+                <td>2025-07-01</td>
+                <td>2025-08-10</td>
+                <td>56</td>
+                <td>845.5 sq.ft</td>
+            </tr>
+            <tr>
+                <td>Project Beta</td>
+                <td>Completed</td>
+                <td>2025-06-01</td>
+                <td>2025-07-15</td>
+                <td>73</td>
+                <td>1024.3 sq.ft</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="buttons">
+        <button onclick="exportToExcel()">Export to Excel</button>
+        <button onclick="window.print()">Print</button>
+        <button onclick="generatePDF()">Export to PDF</button>
+    </div>
+
+    <div class="signatures">
+        <div class="sign-box">Project Manager</div>
+        <div class="sign-box">Managing Director</div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Data from Flask
-        const gaugeData = {{ gauge_count | tojson }};
-        const statusData = {{ status_count | tojson }};
-
-        // Bar Chart for Gauges
+        // Bar Chart for Gauge
         const barCtx = document.getElementById('barChart').getContext('2d');
         new Chart(barCtx, {
             type: 'bar',
             data: {
-                labels: Object.keys(gaugeData),
+                labels: ['24g', '22g', '20g', '18g'],
                 datasets: [{
-                    label: 'No. of Ducts',
-                    data: Object.values(gaugeData),
-                    backgroundColor: ['#4CAF50', '#FFC107', '#2196F3', '#F44336'],
-                    borderRadius: 6
+                    label: 'Ducts per Gauge',
+                    data: [20, 25, 15, 10],
+                    backgroundColor: ['#3498db', '#2ecc71', '#f1c40f', '#e74c3c']
                 }]
             },
             options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
+                responsive: false
             }
         });
 
-        // Pie Chart for Status
+        // Pie Chart for Project Status
         const pieCtx = document.getElementById('pieChart').getContext('2d');
         new Chart(pieCtx, {
             type: 'pie',
             data: {
-                labels: Object.keys(statusData),
+                labels: ['Ongoing', 'Completed'],
                 datasets: [{
-                    data: Object.values(statusData),
-                    backgroundColor: ['#2196F3', '#4CAF50', '#FFC107']
+                    data: [1, 1],
+                    backgroundColor: ['#f39c12', '#2ecc71']
                 }]
             },
             options: {
-                responsive: true
+                responsive: false
             }
         });
+
+        // Export to Excel
+        function exportToExcel() {
+            let table = document.getElementById("summaryTable");
+            let csv = [];
+            for (let row of table.rows) {
+                let cells = Array.from(row.cells).map(cell => `"${cell.innerText}"`);
+                csv.push(cells.join(","));
+            }
+            let csvString = csv.join("\n");
+            let blob = new Blob([csvString], { type: "text/csv" });
+            let link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "production_summary.csv";
+            link.click();
+        }
+
+        // Dummy PDF function placeholder
+        function generatePDF() {
+            alert("PDF export not implemented in this demo.");
+        }
     </script>
 
 </body>
