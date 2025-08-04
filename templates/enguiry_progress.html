@@ -5,120 +5,92 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 30px;
-            background: #f4f4f4;
-        }
-        h2 {
-            text-align: center;
-            color: #333;
+            margin: 20px;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            background: white;
             margin-top: 20px;
         }
-        table, th, td {
-            border: 1px solid #ccc;
+        th, td {
+            border: 1px solid #999;
+            padding: 10px;
+            text-align: center;
         }
         th {
-            background: #333;
-            color: white;
-            padding: 10px;
+            background-color: #f2f2f2;
         }
-        td {
-            padding: 8px;
-            text-align: center;
+        select, input[type="text"] {
+            width: 100%;
+            padding: 4px;
         }
         button {
             padding: 6px 12px;
-            margin: 5px;
             cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
         }
-        .actions {
-            margin-bottom: 20px;
-            text-align: right;
-        }
-        select, input[type="text"] {
-            padding: 4px;
-            width: 100%;
+        button:hover {
+            background-color: #0056b3;
         }
     </style>
+    <script>
+        function confirmDelete(button) {
+            if (confirm("Are you sure you want to delete this row?")) {
+                const row = button.closest("tr");
+                row.remove();
+            }
+        }
+    </script>
 </head>
 <body>
     <h2>Enquiry Progress Table</h2>
 
-    <div class="actions">
-        <button onclick="exportExcel()">Export Excel</button>
-        <button onclick="exportPDF()">Export PDF</button>
-        <button onclick="submitData()">Submit</button>
-        <button onclick="window.print()">Print</button>
-    </div>
-
-    <table id="progressTable">
+    <table>
         <thead>
             <tr>
                 <th>Enquiry ID</th>
-                <th>Vendor Name</th>
-                <th>Project Location</th>
+                <th>Vendor</th>
+                <th>Location</th>
                 <th>Start Date</th>
                 <th>End Date</th>
                 <th>Project Incharge</th>
-                <th>Current Stage</th>
+                <th>Stage</th>
                 <th>Status</th>
                 <th>Remarks</th>
-                <th>Actions</th>
+                <th>Action</th>
             </tr>
         </thead>
         <tbody id="tableBody">
+            {% for row in progress_data %}
             <tr>
-                <td>VE/TN/2526/E001</td>
-                <td>ABC Ducts Ltd</td>
-                <td>Chennai</td>
-                <td>2025-08-01</td>
-                <td>2025-09-15</td>
-                <td>Ravi Kumar</td>
+                <td>{{ row.enquiry_id }}</td>
+                <td>{{ row.vendor }}</td>
+                <td>{{ row.location }}</td>
+                <td>{{ row.start_date }}</td>
+                <td>{{ row.end_date }}</td>
+                <td>{{ row.incharge }}</td>
                 <td>
                     <select>
-                        <option>Drawing</option>
-                        <option>Production</option>
-                        <option>Dispatch</option>
-                        <option>Completed</option>
+                        <option {% if row.stage == 'Drawing' %}selected{% endif %}>Drawing</option>
+                        <option {% if row.stage == 'Production' %}selected{% endif %}>Production</option>
+                        <option {% if row.stage == 'Dispatch' %}selected{% endif %}>Dispatch</option>
+                        <option {% if row.stage == 'Completed' %}selected{% endif %}>Completed</option>
                     </select>
                 </td>
                 <td>
                     <select>
-                        <option>In Progress</option>
-                        <option>Completed</option>
+                        <option {% if row.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                        <option {% if row.status == 'Completed' %}selected{% endif %}>Completed</option>
                     </select>
                 </td>
-                <td><input type="text" value="-" /></td>
-                <td>
-                    <button onclick="confirmDelete(this)">Delete</button>
-                </td>
+                <td><input type="text" value="{{ row.remarks }}" /></td>
+                <td><button onclick="confirmDelete(this)">Delete</button></td>
             </tr>
-            <!-- Add more dummy rows if needed -->
+            {% endfor %}
         </tbody>
     </table>
-
-    <script>
-        function confirmDelete(btn) {
-            if (confirm("Are you sure you want to delete this row?")) {
-                btn.closest('tr').remove();
-            }
-        }
-
-        function exportExcel() {
-            alert("Export to Excel triggered.");
-        }
-
-        function exportPDF() {
-            alert("Export to PDF triggered.");
-        }
-
-        function submitData() {
-            alert("Submit triggered. Data will be processed.");
-        }
-    </script>
 </body>
 </html>
