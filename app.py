@@ -123,7 +123,7 @@ def new_project():
             filename = os.path.join('uploads', source_drawing.filename)
             source_drawing.save(filename)
 
-        cur.execute("""
+        cursor.execute("""
             INSERT INTO projects (enquiry_id, quotation, start_date, end_date, location, source_drawing, vendor_id,
                                   notes, email, contact_number, project_incharge)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
@@ -133,7 +133,7 @@ def new_project():
 
         return redirect(url_for('new_project'))
 
-    cur.execute("SELECT id, vendor_name FROM vendors")
+    cursor.execute("SELECT id, vendor_name FROM vendors")
     vendors = cur.fetchall()
 
     cur.execute("SELECT * FROM projects ORDER BY id DESC")
