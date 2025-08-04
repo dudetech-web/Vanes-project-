@@ -180,10 +180,7 @@
     </div>
 
     <script>
-        const vendors = [
-            {name: 'ABC Ducts Ltd', gst: '29ABCDE1234F2Z5', address: 'MG Road, Bangalore'},
-            {name: 'SteelFab Solutions', gst: '27STFAB6789G1Z6', address: 'Indiranagar, Bangalore'}
-        ];
+        const vendors = {{ vendors | tojson }};
 
         function filterVendors() {
             const input = document.getElementById("vendorSearch");
