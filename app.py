@@ -103,23 +103,40 @@ def vendor_registration():
 @app.route('/new_project', methods=['GET', 'POST'])
 def new_project():
     if request.method == 'POST':
+        enquiry_id = request.form['enquiry_id']
+        quotation = request.form['quotation']
+        start_date = request.form['start_date']
+        end_date = request.form['end_date']
+        project_location = request.form['project_location']
+        vendor_name = request.form['vendor_name']
+        gst = request.form['gst']
+        address = request.form['address']
+        notes = request.form['notes']
+        email = request.form['email']
+        contact_number = request.form['contact_number']
+        project_incharge = request.form['project_incharge']
+        drawing_file = request.files.get('drawing')  # Optional file
+
         project = {
-            'enquiry_id': request.form['enquiry_id'],
-            'quotation': request.form['quotation'],
-            'start_date': request.form['start_date'],
-            'end_date': request.form['end_date'],
-            'project_location': request.form['project_location'],
-            'drawing_file': request.form['drawing_file'],
-            'vendor_name': request.form['vendor_name'],
-            'gst': request.form['gst'],
-            'address': request.form['address'],
-            'notes': request.form['notes'],
-            'email': request.form['email'],
-            'contact_number': request.form['contact_number'],
-            'project_incharge': request.form['project_incharge']
+            'enquiry_id': enquiry_id,
+            'quotation': quotation,
+            'start_date': start_date,
+            'end_date': end_date,
+            'project_location': project_location,
+            'drawing_file_name': drawing_file.filename if drawing_file else '',
+            'vendor_name': vendor_name,
+            'gst': gst,
+            'address': address,
+            'notes': notes,
+            'email': email,
+            'contact_number': contact_number,
+            'project_incharge': project_incharge,
+            'created_at': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         }
+
         projects_db.append(project)
         return redirect(url_for('new_project'))
+
     return render_template('new_project.html', vendors=vendors_db, projects=projects_db)
 
 @app.route('/get_vendor_info', methods=['POST'])
@@ -132,7 +149,6 @@ def get_vendor_info():
                 'address': vendor['branch']
             })
     return jsonify({'gst': '', 'address': ''})
-
 @app.route('/edit_project', methods=['POST'])
 def edit_project():
     enquiry_id = request.form['enquiry_id']
