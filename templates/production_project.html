@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Production - New Project</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            position: relative;
+        }
+
+        table th, table td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+        }
+
+        table th {
+            background-color: #f2f2f2;
+        }
+
+        .open-btn {
+            padding: 5px 10px;
+            background-color: #0a84ff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .measurement-section {
+            display: none;
+            position: relative;
+        }
+
+        .watermark {
+            position: absolute;
+            top: 40%;
+            left: 35%;
+            transform: rotate(-30deg);
+            font-size: 48px;
+            color: rgba(200, 200, 200, 0.3);
+            z-index: 0;
+        }
+
+        .measurement-table {
+            position: relative;
+            z-index: 1;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Production - New Project</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>Enquiry ID</th>
+            <th>Project Name</th>
+            <th>Vendor</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Status</th>
+            <th>Open</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Dummy approved projects -->
+        <tr>
+            <td>VE/TN/2526/E001</td>
+            <td>ABC Mall HVAC</td>
+            <td>ABC Ducts Ltd</td>
+            <td>2025-08-01</td>
+            <td>2025-08-20</td>
+            <td>Approved</td>
+            <td><button class="open-btn" onclick="toggleMeasurementSheet()">Open</button></td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- Hidden measurement sheet section -->
+<div class="measurement-section" id="measurementSheet">
+    <div class="watermark">@vanes engineer</div>
+    <table class="measurement-table">
+        <thead>
+            <tr>
+                <th>Duct No</th>
+                <th>Duct Type</th>
+                <th>W1</th>
+                <th>H1</th>
+                <th>W2</th>
+                <th>H2</th>
+                <th>Length/Radius</th>
+                <th>Offset/Degree</th>
+                <th>Quantity</th>
+                <th>Area</th>
+                <th>24g</th>
+                <th>22g</th>
+                <th>20g</th>
+                <th>18g</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Example row -->
+            <tr>
+                <td>D001</td>
+                <td>st</td>
+                <td>500</td>
+                <td>300</td>
+                <td>0</td>
+                <td>0</td>
+                <td>1000</td>
+                <td>0</td>
+                <td>2</td>
+                <td>800</td>
+                <td></td>
+                <td>22g</td>
+                <td></td>
+                <td></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+    function toggleMeasurementSheet() {
+        const section = document.getElementById('measurementSheet');
+        section.style.display = section.style.display === 'none' ? 'block' : 'none';
+    }
+</script>
+
+</body>
+</html>
