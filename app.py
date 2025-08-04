@@ -241,6 +241,34 @@ def require_login():
     allowed_routes = ['login', 'do_login', 'dashboard', 'static']
     if request.endpoint not in allowed_routes and 'user' not in session:
         return redirect(url_for('login'))
-        
-if __name__ == "__main__":
+
+
+def initialize_db():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Create vendors table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS vendors (
+            id SERIAL PRIMARY KEY,
+            vendor_name VARCHAR(255),
+            gst_no VARCHAR(50),
+            pan_no VARCHAR(50),
+            bank_name VARCHAR(100),
+            branch_name VARCHAR(100),
+            account_no VARCHAR(100),
+            ifsc_code VARCHAR(50),
+            address TEXT
+        )
+    ''')
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+# 👇 Call this once when app starts (only for initial setup)
+initialize_db()
+
+# Main app run
+if __name__ == '__main__':
     app.run(debug=True)
