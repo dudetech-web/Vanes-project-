@@ -1,9 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
-import os
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
-app.config['UPLOAD_FOLDER'] = 'uploads'
 
 # Dummy login credentials
 users = {
@@ -14,23 +12,34 @@ users = {
 # Dummy vendor database
 vendors_db = [
     {
-        'id': 1,
         'vendor_name': 'ABC Ducts Ltd',
         'gst': '29ABCDE1234F2Z5',
-        'address': 'Chennai, Tamil Nadu'
+        'pan': 'ABCDE1234F',
+        'bank_name': 'State Bank of India',
+        'branch': 'MG Road',
+        'account_no': '12345678901',
+        'ifsc': 'SBIN0001234',
+        'communications': [
+            {'name': 'Raj Kumar', 'mobile': '9876543210', 'email': 'raj@abc.com', 'designation': 'Manager'},
+            {'name': 'Anjali Mehta', 'mobile': '9123456789', 'email': 'anjali@abc.com', 'designation': 'Engineer'}
+        ]
     },
     {
-        'id': 2,
         'vendor_name': 'SteelFab Solutions',
         'gst': '27STFAB6789G1Z6',
-        'address': 'Bangalore, Karnataka'
+        'pan': 'STFAB6789G',
+        'bank_name': 'HDFC Bank',
+        'branch': 'Indiranagar',
+        'account_no': '98765432109',
+        'ifsc': 'HDFC0009876',
+        'communications': [
+            {'name': 'Kiran Rao', 'mobile': '9090909090', 'email': 'kiran@steelfab.com', 'designation': 'Director'}
+        ]
     }
 ]
 
-# Dummy projects
+# Dummy project DB
 projects_db = []
-
-# ---------- ROUTES ----------
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
@@ -47,7 +56,7 @@ def login():
 
 @app.route('/logout')
 def logout():
-    session.clear()
+    session.pop('user', None)
     return redirect(url_for('login'))
 
 @app.route('/dashboard')
@@ -56,15 +65,10 @@ def dashboard():
         return redirect(url_for('login'))
     return render_template('dashboard.html')
 
-@app.route('/register')
-def register():
-    return redirect(url_for('vendor_registration'))
-
 @app.route('/vendor-registration', methods=['GET', 'POST'])
 def vendor_registration():
     if request.method == 'POST':
         vendor = {
-            'id': len(vendors_db) + 1,
             'vendor_name': request.form['vendor_name'],
             'gst': request.form['gst'],
             'pan': request.form['pan'],
@@ -72,7 +76,6 @@ def vendor_registration():
             'branch': request.form['branch'],
             'account_no': request.form['account_no'],
             'ifsc': request.form['ifsc'],
-            'address': request.form['address'],
             'communications': []
         }
         names = request.form.getlist('contact_name[]')
@@ -90,58 +93,70 @@ def vendor_registration():
         return redirect(url_for('dashboard'))
     return render_template('vendor_registration.html')
 
+# ---------------- New Project ----------------
+
 @app.route('/new_project', methods=['GET', 'POST'])
 def new_project():
     if request.method == 'POST':
-        enquiry_id = request.form['enquiry_id']
-        quotation = request.form['quotation']
-        start_date = request.form['start_date']
-        end_date = request.form['end_date']
-        location = request.form['location']
-        vendor_id = int(request.form['vendor_name'])
-        email = request.form['email']
-        contact = request.form['contact']
-        incharge = request.form['incharge']
-        notes = request.form['notes']
-        
-        drawing = request.files['drawing']
-        drawing_filename = ''
-        if drawing and drawing.filename != '':
-            drawing_filename = drawing.filename
-            if not os.path.exists(app.config['UPLOAD_FOLDER']):
-                os.makedirs(app.config['UPLOAD_FOLDER'])
-            drawing.save(os.path.join(app.config['UPLOAD_FOLDER'], drawing_filename))
-        
         project = {
-            'enquiry_id': enquiry_id,
-            'quotation': quotation,
-            'start_date': start_date,
-            'end_date': end_date,
-            'location': location,
-            'vendor_id': vendor_id,
-            'vendor_name': next((v['vendor_name'] for v in vendors_db if v['id'] == vendor_id), ''),
-            'gst': next((v['gst'] for v in vendors_db if v['id'] == vendor_id), ''),
-            'address': next((v['address'] for v in vendors_db if v['id'] == vendor_id), ''),
-            'email': email,
-            'contact': contact,
-            'incharge': incharge,
-            'notes': notes,
-            'drawing': drawing_filename
+            'enquiry_id': request.form['enquiry_id'],
+            'quotation': request.form['quotation'],
+            'start_date': request.form['start_date'],
+            'end_date': request.form['end_date'],
+            'project_location': request.form['project_location'],
+            'drawing_file': request.form['drawing_file'],
+            'vendor_name': request.form['vendor_name'],
+            'gst': request.form['gst'],
+            'address': request.form['address'],
+            'notes': request.form['notes'],
+            'email': request.form['email'],
+            'contact_number': request.form['contact_number'],
+            'project_incharge': request.form['project_incharge']
         }
         projects_db.append(project)
         return redirect(url_for('new_project'))
+    
+    return render_template('new_project.html', vendors=vendors_db, projects=projects_db)
 
-    enquiry_id = f"VE/TN/2526/E{str(len(projects_db)+1).zfill(3)}"
-    return render_template('new_project.html', enquiry_id=enquiry_id, vendors=vendors_db, projects=projects_db)
-
-@app.route('/get_vendor_info/<int:vendor_id>')
-def get_vendor_info(vendor_id):
-    vendor = next((v for v in vendors_db if v['id'] == vendor_id), None)
-    if vendor:
-        return jsonify({'gst': vendor['gst'], 'address': vendor['address']})
+@app.route('/get_vendor_info', methods=['POST'])
+def get_vendor_info():
+    vendor_name = request.form['vendor_name']
+    for vendor in vendors_db:
+        if vendor['vendor_name'] == vendor_name:
+            return jsonify({
+                'gst': vendor['gst'],
+                'address': vendor['branch']  # Assuming branch as address
+            })
     return jsonify({'gst': '', 'address': ''})
 
-# --------- OTHER PLACEHOLDER ROUTES ----------
+@app.route('/edit_project', methods=['POST'])
+def edit_project():
+    enquiry_id = request.form['enquiry_id']
+    for project in projects_db:
+        if project['enquiry_id'] == enquiry_id:
+            project['quotation'] = request.form['quotation']
+            project['start_date'] = request.form['start_date']
+            project['end_date'] = request.form['end_date']
+            project['project_location'] = request.form['project_location']
+            project['project_incharge'] = request.form['project_incharge']
+            project['contact_number'] = request.form['contact_number']
+            project['email'] = request.form['email']
+            project['notes'] = request.form['notes']
+            break
+    return jsonify({'status': 'success'})
+
+@app.route('/delete_project', methods=['POST'])
+def delete_project():
+    enquiry_id = request.form['enquiry_id']
+    global projects_db
+    projects_db = [p for p in projects_db if p['enquiry_id'] != enquiry_id]
+    return jsonify({'status': 'deleted'})
+
+@app.route('/add_measurement_sheet/<enquiry_id>')
+def add_measurement_sheet(enquiry_id):
+    return f"Measurement Sheet Page for {enquiry_id}"
+
+# ---------------- Placeholder Routes ----------------
 
 @app.route('/enquiry_progress')
 def enquiry_progress():
@@ -191,10 +206,5 @@ def monthly_reports():
 def employee_registration():
     return "Employee Registration Page"
 
-@app.route('/vendor_registration')
-def vendor_registration():
-    return "Vendor Registration Page"
-
-# ---------- RUN ----------
 if __name__ == '__main__':
     app.run(debug=True)
