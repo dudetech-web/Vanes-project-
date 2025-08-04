@@ -2,3 +2,4 @@ Flask
 gunicorn
 fpdf
 XlsxWriter
+psycopg2-binary
