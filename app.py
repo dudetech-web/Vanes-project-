@@ -194,8 +194,11 @@ def enquiry_summary():
     return render_template('enquiry_summary.html')
 
 @app.route('/production_project')
-def production_project():
-    return "Production New Project Page"
+def production_project_view():
+    # Filter only approved enquiry projects
+    approved_projects = [p for p in enquiry_projects if p.get('approved') == True]
+
+    return render_template('production_project.html', approved_projects=approved_projects)
 
 @app.route('/production_progress', methods=['GET', 'POST'])
 def production_progress_view():
