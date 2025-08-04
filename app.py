@@ -1,9 +1,5 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify, send_file
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from datetime import datetime
-import io
-import csv
-import xlsxwriter
-from fpdf import FPDF
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -43,9 +39,12 @@ vendors_db = [
     }
 ]
 
-# Dummy project DB
+# Dummy project database
 projects_db = []
+production_progress = []
+enquiry_projects = []
 
+# ---------- Auth ----------
 @app.route('/', methods=['GET', 'POST'])
 def login():
     error = None
@@ -64,12 +63,14 @@ def logout():
     session.pop('user', None)
     return redirect(url_for('login'))
 
+# ---------- Dashboard ----------
 @app.route('/dashboard')
 def dashboard():
     if 'user' not in session:
         return redirect(url_for('login'))
     return render_template('dashboard.html')
 
+# ---------- Vendor Registration ----------
 @app.route('/vendor-registration', methods=['GET', 'POST'])
 def vendor_registration():
     if request.method == 'POST':
@@ -98,8 +99,7 @@ def vendor_registration():
         return redirect(url_for('dashboard'))
     return render_template('vendor_registration.html')
 
-# ---------------- New Project ----------------
-
+# ---------- New Project ----------
 @app.route('/new_project', methods=['GET', 'POST'])
 def new_project():
     if request.method == 'POST':
@@ -120,7 +120,6 @@ def new_project():
         }
         projects_db.append(project)
         return redirect(url_for('new_project'))
-    
     return render_template('new_project.html', vendors=vendors_db, projects=projects_db)
 
 @app.route('/get_vendor_info', methods=['POST'])
@@ -130,7 +129,7 @@ def get_vendor_info():
         if vendor['vendor_name'] == vendor_name:
             return jsonify({
                 'gst': vendor['gst'],
-                'address': vendor['branch']  # Assuming branch as address
+                'address': vendor['branch']
             })
     return jsonify({'gst': '', 'address': ''})
 
@@ -161,11 +160,9 @@ def delete_project():
 def add_measurement_sheet(enquiry_id):
     return f"Measurement Sheet Page for {enquiry_id}"
 
-# ---------------- Placeholder Routes ----------------
-
+# ---------- Enquiry ----------
 @app.route('/enquiry_progress')
 def enquiry_progress():
-    # Dummy project progress data (you can later fetch from DB)
     progress_data = [
         {
             'enquiry_id': 'VE/TN/2526/E001',
@@ -190,19 +187,16 @@ def enquiry_progress():
             'remarks': 'Ready for dispatch'
         }
     ]
-    return render_template('enquiry_progress.html', progress_data=progress_data)"
+    return render_template('enquiry_progress.html', progress_data=progress_data)
 
 @app.route('/enquiry_summary')
 def enquiry_summary():
-    if 'user' not in session:
-        return redirect(url_for('login'))
     return render_template('enquiry_summary.html')
 
+# ---------- Production ----------
 @app.route('/production_project')
 def production_project_view():
-    # Filter only approved enquiry projects
     approved_projects = [p for p in enquiry_projects if p.get('approved') == True]
-
     return render_template('production_project.html', approved_projects=approved_projects)
 
 @app.route('/production_progress', methods=['GET', 'POST'])
@@ -210,18 +204,15 @@ def production_progress_view():
     if request.method == 'POST':
         enquiry_id = request.form['enquiry_id']
         new_status = request.form['status']
-        # Update status in the dummy list
         for project in production_progress:
             if project['enquiry_id'] == enquiry_id:
                 project['status'] = new_status
                 break
         return redirect(url_for('production_progress_view'))
-
     return render_template('production_progress.html', progress_data=production_progress)
 
 @app.route('/production_summary')
 def production_summary():
-    # Dummy data for demonstration
     summary_data = [
         {
             'project_name': 'Project Alpha',
@@ -242,18 +233,7 @@ def production_summary():
     ]
     return render_template("production_summary.html", summary=summary_data)
 
-@app.route('/sheet_cutting')
-def sheet_cutting():
-    return "Sheet Cutting Page"
-
-@app.route('/fabrication')
-def fabrication():
-    return "Fabrication Page"
-
-@app.route('/dispatch')
-def dispatch():
-    return "Dispatch Page"
-
+# ---------- Reports ----------
 @app.route('/daily_reports')
 def daily_reports():
     return "Daily Reports Page"
@@ -266,6 +246,7 @@ def weekly_reports():
 def monthly_reports():
     return "Monthly Reports Page"
 
+# ---------- Employee Registration ----------
 @app.route('/employee_registration', methods=['GET', 'POST'])
 def employee_registration():
     if request.method == 'POST':
@@ -295,10 +276,8 @@ def employee_registration():
             "reference_mobile": request.form['reference_mobile'],
             "reference_relation": request.form['reference_relation']
         }
-        # Optional: Save `data` to your database here.
         print("Received Employee Data:", data)
-        return redirect(url_for('dashboard'))  # or wherever you want to redirect after save
-
+        return redirect(url_for('dashboard'))
     return render_template('employee_registration.html')
 
 if __name__ == '__main__':
