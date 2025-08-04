@@ -189,7 +189,9 @@ def enquiry_progress():
 
 @app.route('/enquiry_summary')
 def enquiry_summary():
-    return "Enquiry Summary Page"
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    return render_template('enquiry_summary.html')
 
 @app.route('/production_project')
 def production_project():
