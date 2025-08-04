@@ -241,10 +241,7 @@ def enquiry_progress():
     return render_template('enquiry_progress.html', progress_data=progress_data)
 
 
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('login'))
+
 
 
 if __name__ == '__main__':
