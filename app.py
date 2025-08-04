@@ -37,15 +37,6 @@ cursor = conn.cursor()
 def login():
     return render_template('login.html')
 
-@app.route('/do_login', methods=['POST'])
-def do_login():
-    username = request.form['username']
-    password = request.form['password']
-    # Dummy credentials for now
-    if username == 'admin' and password == 'password':
-        session['user'] = username
-        return redirect(url_for('dashboard'))
-    return redirect(url_for('login'))
 
 @app.route('/dashboard')
 def dashboard():
