@@ -1,0 +1,104 @@
+<!DOCTYPE html><html>
+<head>
+    <title>Add Measurement Sheet</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { display: flex; }
+        .left-panel, .right-panel { width: 50%; padding: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        table, th, td { border: 1px solid black; }
+        th, td { padding: 8px; text-align: center; }
+        button { margin: 5px; padding: 6px 12px; }
+        .signature-section { margin-top: 30px; }
+    </style>
+</head>
+<body><h2>Add Measurement Sheet</h2>
+<div class="container">
+    <div class="left-panel">
+        <label>AutoCAD Image Preview:</label><br>
+        <img src="/static/sample.png" alt="AutoCAD Preview" width="100%"><br><br><label>Upload Tag File:</label>
+    <input type="file"><br><br>
+
+    <label>Upload Revised Tag File:</label>
+    <input type="file">
+</div>
+
+<div class="right-panel">
+    <form method="POST" action="/add_measurement_sheet">
+        <label>Duct No:</label>
+        <input type="text" name="duct_no"><br>
+        
+        <label>Duct Type:</label>
+        <select name="duct_type">
+            <option value="st">ST</option>
+            <option value="elb">ELB</option>
+            <option value="red">RED</option>
+            <option value="dm">DM</option>
+            <option value="offset">OFFSET</option>
+            <option value="shoe">SHOE</option>
+            <option value="vanes">VANES</option>
+        </select><br>
+
+        <label>W1:</label><input type="number" name="w1"><br>
+        <label>H1:</label><input type="number" name="h1"><br>
+        <label>W2:</label><input type="number" name="w2"><br>
+        <label>H2:</label><input type="number" name="h2"><br>
+        <label>Length/Radius:</label><input type="number" name="length"><br>
+        <label>Offset/Degree:</label><input type="number" name="degree"><br>
+        <label>Quantity:</label><input type="number" name="quantity"><br>
+        <label>Factor (if applicable):</label><input type="number" step="0.01" name="factor"><br>
+        <button type="submit">Add Entry</button>
+    </form>
+</div>
+
+</div><hr><h3>Live Table</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Duct No</th><th>Type</th><th>W1</th><th>H1</th><th>W2</th><th>H2</th>
+            <th>Length</th><th>Degree</th><th>Qty</th><th>Factor</th>
+            <th>Area (m²)</th><th>Gauge</th><th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for entry in entries %}
+        <tr>
+            <td>{{ entry.duct_no }}</td><td>{{ entry.duct_type }}</td>
+            <td>{{ entry.w1 }}</td><td>{{ entry.h1 }}</td>
+            <td>{{ entry.w2 }}</td><td>{{ entry.h2 }}</td>
+            <td>{{ entry.length }}</td><td>{{ entry.degree }}</td>
+            <td>{{ entry.quantity }}</td><td>{{ entry.factor }}</td>
+            <td>{{ entry.area }}</td><td>{{ entry.gauge }}</td>
+            <td>
+                <button onclick="editEntry('{{ entry.id }}')">Edit</button>
+                <button onclick="confirmDelete('{{ entry.id }}')">Delete</button>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table><div class="signature-section">
+    <p><strong>Prepared By:</strong> Design Engineer – {{ timestamp }}</p>
+    <p><strong>Checked By:</strong> Project Manager – {{ timestamp }}</p>
+    <p><strong>Approved By:</strong> Managing Director – {{ timestamp }}</p>
+</div><div style="margin-top: 20px;">
+    <button onclick="exportToExcel()">Export to Excel</button>
+    <button onclick="exportToPDF()">Export to PDF</button>
+    <button onclick="window.print()">Print</button>
+    <button onclick="submitMeasurementSheet()">Submit</button>
+</div><script>
+function confirmDelete(id) {
+    if (confirm('Are you sure you want to delete this entry?')) {
+        window.location.href = '/delete_entry/' + id;
+    }
+}
+function exportToExcel() {
+    window.location.href = "/export_excel";
+}
+function exportToPDF() {
+    window.location.href = "/export_pdf";
+}
+function submitMeasurementSheet() {
+    alert("Measurement Sheet submitted successfully.");
+}
+</script></body>
+</html>
