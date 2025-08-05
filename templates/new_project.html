@@ -105,7 +105,7 @@
                 <select name="vendor_name" id="vendor_name" class="select2" onchange="autofillVendor()">
                     <option value="">Select vendor...</option>
                     {% for v in vendors %}
-                        <option value="{{ v.name }}">{{ v.name }}</option>
+                        <option value="{{ v.vendor_name }}">{{ v.vendor_name }}</option>
                     {% endfor %}
                 </select>
             </div>
