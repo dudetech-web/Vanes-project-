@@ -103,34 +103,36 @@ def logout():
 
 @app.route('/insert_dummy_vendors')
 def insert_dummy_vendors():
-    dummy_vendors = [
-        ('ABC HVAC Pvt Ltd', 'GSTABC1234', 'Chennai, Tamil Nadu'),
-        ('Cooling Masters', 'GSTCOOL5678', 'Bangalore, Karnataka'),
-        ('Duct Experts', 'GSTDCT9101', 'Hyderabad, Telangana'),
-        ('FreshAir Solutions', 'GSTFRSH1122', 'Mumbai, Maharashtra'),
-        ('AirFlow Engineers', 'GSTAIR3344', 'Pune, Maharashtra')
-    ]
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
-    for name, gst, address in dummy_vendors:
-        c.execute('INSERT OR IGNORE INTO vendors (vendor_name, gst, address) VALUES (?, ?, ?)', (name, gst, address))
+
+    dummy_vendors = [
+        ('ABC Ducting', 'GST1234', 'PAN1234', 'HDFC Bank', 'Chennai', '1234567890', 'HDFC0001', 'Chennai, TN'),
+        ('XYZ Fabricators', 'GST5678', 'PAN5678', 'ICICI Bank', 'Coimbatore', '9876543210', 'ICIC0002', 'Coimbatore, TN'),
+        ('PQR Engineering', 'GST9101', 'PAN9101', 'SBI Bank', 'Madurai', '1111222233', 'SBIN0003', 'Madurai, TN'),
+    ]
+
+    for v in dummy_vendors:
+        c.execute('''INSERT INTO vendors 
+                     (name, gst, pan, bank_name, branch, account_no, ifsc, address) 
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)''', v)
+
     conn.commit()
     conn.close()
-    return "Dummy vendors inserted."
+    return "Dummy vendors inserted successfully."
 
 
 @app.route('/get_vendor_info', methods=['POST'])
 def get_vendor_info():
-    vendor_name = request.form.get('vendor_name')
+    vendor_name = request.form['vendor_name']
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
-    c.execute('SELECT gst, address FROM vendors WHERE name = ?', (vendor_name,))
-    row = c.fetchone()
+    c.execute("SELECT gst, address FROM vendors WHERE name = ?", (vendor_name,))
+    vendor = c.fetchone()
     conn.close()
-    if row:
-        return jsonify({'gst': row[0], 'address': row[1]})
-    else:
-        return jsonify({'gst': '', 'address': ''})
+    if vendor:
+        return jsonify({'gst': vendor[0], 'address': vendor[1]})
+    return jsonify({'gst': '', 'address': ''})
 
 # ---------- CREATE ADMIN ----------
 @app.route('/create_admin')
@@ -227,26 +229,25 @@ def new_project():
     c = conn.cursor()
 
     if request.method == 'POST':
-        enquiry_id = request.form.get('enquiry_id')
-        vendor_name = request.form.get('vendor_name')
-        quotation = request.form.get('quotation')
-        gst = request.form.get('gst')
-        start_date = request.form.get('start_date')
-        address = request.form.get('address')
-        end_date = request.form.get('end_date')
-        email = request.form.get('email')
-        project_location = request.form.get('project_location')
-        contact_number = request.form.get('contact_number')
-        project_incharge = request.form.get('project_incharge')
-        notes = request.form.get('notes')
-        drawing = request.files.get('drawing')
+        enquiry_id = request.form['enquiry_id']
+        vendor_name = request.form['vendor_name']
+        quotation = request.form['quotation']
+        gst = request.form['gst']
+        start_date = request.form['start_date']
+        address = request.form['address']
+        end_date = request.form['end_date']
+        email = request.form['email']
+        project_location = request.form['project_location']
+        contact_number = request.form['contact_number']
+        project_incharge = request.form['project_incharge']
+        notes = request.form['notes']
+        drawing = request.files['drawing']
 
         drawing_filename = ''
-        if drawing and drawing.filename:
-            # Ensure uploads directory exists
-            os.makedirs('uploads', exist_ok=True)
+        if drawing:
             drawing_filename = drawing.filename
-            drawing.save(os.path.join('uploads', drawing_filename))
+            upload_path = os.path.join('uploads', drawing_filename)
+            drawing.save(upload_path)
 
         c.execute('''INSERT INTO projects (
                         enquiry_id, vendor_name, quotation, gst, start_date, address,
@@ -258,17 +259,35 @@ def new_project():
                    project_incharge, notes, drawing_filename))
         conn.commit()
 
-    # GET or after insert
+    # GET section
     c.execute('SELECT * FROM vendors')
-    vendors = [dict(name=row[1], gst=row[2], address=row[3]) for row in c.fetchall()]
+    vendors_raw = c.fetchall()
+    vendors = []
+    for v in vendors_raw:
+        vendors.append({
+            'vendor_name': v[1],
+            'gst': v[2],
+            'address': v[8]
+        })
 
     c.execute('SELECT * FROM projects')
-    projects = [dict(
-        enquiry_id=row[1], vendor_name=row[2], quotation=row[3], gst=row[4],
-        start_date=row[5], address=row[6], end_date=row[7], email=row[8],
-        project_location=row[9], contact_number=row[10], project_incharge=row[11],
-        notes=row[12], drawing=row[13]
-    ) for row in c.fetchall()]
+    projects_raw = c.fetchall()
+    projects = []
+    for p in projects_raw:
+        projects.append({
+            'enquiry_id': p[1],
+            'vendor_name': p[2],
+            'quotation': p[3],
+            'gst': p[4],
+            'start_date': p[5],
+            'address': p[6],
+            'end_date': p[7],
+            'email': p[8],
+            'project_location': p[9],
+            'contact_number': p[10],
+            'project_incharge': p[11],
+            'notes': p[12],
+        })
 
     conn.close()
     now = datetime.now()
