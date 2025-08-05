@@ -410,6 +410,20 @@ def production_new_project():
     conn.close()
     return render_template('production_project.html', projects=projects)
 
+
+def insert_dummy_vendor():
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute("SELECT COUNT(*) FROM vendors WHERE name = 'vend6'")
+    if c.fetchone()[0] == 0:
+        c.execute('''INSERT INTO vendors (name, gst, pan, bank_name, branch, account_no, ifsc, address)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+                  ('vend6', 'GSTVEND6', 'PANVEND6', 'Dummy Bank', 'Dummy Branch', '1234567890', 'IFSC000VEND6', 'Dummy Address 6'))
+        conn.commit()
+    conn.close()
+
+insert_dummy_vendor()
+
 # ---------- RUN ----------
 if __name__ == '__main__':
     app.run(debug=True)
