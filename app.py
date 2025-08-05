@@ -333,7 +333,7 @@ def production_summary():
 def production_progress():
     if 'user' not in session:
         return redirect(url_for('login'))
-    return render_template('production_progress_table.html')
+    return render_template('production_progress.html')
 
 @app.route('/production_new_project')
 def production_new_project():
