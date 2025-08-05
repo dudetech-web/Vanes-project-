@@ -268,7 +268,7 @@ def enquiry_progress():
     c.execute('SELECT * FROM enquiry_progress')
     rows = c.fetchall()
     conn.close()
-    return render_template('enquiry_progress_table.html', progress_data=rows)
+    return render_template('enquiry_progress.html', progress_data=rows)
 
 # ---------- PRODUCTION ----------
 @app.route('/production_summary')
