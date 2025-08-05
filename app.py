@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
-import sqlite3, hashlib, os
+from werkzeug.utils import secure_filename
+import sqlite3, os, hashlib
 
 app = Flask(__name__)
 app.secret_key = 'secret_key'
