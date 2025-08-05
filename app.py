@@ -139,6 +139,8 @@ def vendor_registration():
 # --- GET VENDOR INFO (Auto-fill GST and Address) ---
 @app.route('/get_vendor_info', methods=['POST'])
 def get_vendor_info():
+    from flask import jsonify  # Ensure this is imported at the top
+
     vendor_name = request.form['vendor_name']
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
@@ -153,56 +155,62 @@ def get_vendor_info():
 # --- NEW PROJECT PAGE --
 
 
+
+
+
 @app.route('/new_project', methods=['GET', 'POST'])
 def new_project():
-    if 'user' not in session:
-        return redirect(url_for('login'))
-
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
 
     if request.method == 'POST':
-        enquiry_id = request.form.get('enquiry_id')
-        vendor_name = request.form.get('vendor_name')
-        quotation = request.form.get('quotation')
-        gst = request.form.get('gst')
-        start_date = request.form.get('start_date')
-        address = request.form.get('address')
-        end_date = request.form.get('end_date')
-        email = request.form.get('email')
-        project_location = request.form.get('project_location')
-        contact_number = request.form.get('contact_number')
-        project_incharge = request.form.get('project_incharge')
-        notes = request.form.get('notes')
+        enquiry_id = request.form['enquiry_id']
+        vendor_name = request.form['vendor_name']
+        quotation = request.form['quotation']
+        gst = request.form['gst']
+        start_date = request.form['start_date']
+        address = request.form['address']
+        end_date = request.form['end_date']
+        email = request.form['email']
+        project_location = request.form['project_location']
+        contact_number = request.form['contact_number']
+        project_incharge = request.form['project_incharge']
+        notes = request.form['notes']
+        drawing = request.files['drawing']
 
-        drawing_path = ""
-        if 'drawing' in request.files:
-            file = request.files['drawing']
-            if file.filename:
-                filename = secure_filename(file.filename)
-                os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                drawing_path = filename
+        drawing_filename = None
+        if drawing:
+            drawing_filename = drawing.filename
+            drawing.save(os.path.join('uploads', drawing_filename))
 
-        # Insert into the database
-        c.execute('''INSERT INTO projects (
-                        enquiry_id, vendor_name, quotation, gst, start_date, address,
-                        end_date, email, project_location, contact_number, 
-                        project_incharge, notes, drawing_path
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-                  (enquiry_id, vendor_name, quotation, gst, start_date, address,
-                   end_date, email, project_location, contact_number,
-                   project_incharge, notes, drawing_path))
+        c.execute('''
+            INSERT INTO projects (
+                enquiry_id, vendor_name, quotation, gst, start_date, address,
+                end_date, email, project_location, contact_number,
+                project_incharge, notes, drawing_filename
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            enquiry_id, vendor_name, quotation, gst, start_date, address,
+            end_date, email, project_location, contact_number,
+            project_incharge, notes, drawing_filename
+        ))
         conn.commit()
-        conn.close()
-        return redirect(url_for('new_project'))
 
-    # GET request: Load vendors for dropdown
-    c.execute('SELECT name FROM vendors')
-    vendors = [row[0] for row in c.fetchall()]
+    # Fetch vendors
+    c.execute("SELECT vendor_name FROM vendors")
+    vendors = [{'vendor_name': row[0]} for row in c.fetchall()]
+
+    # Fetch existing projects
+    c.execute('SELECT * FROM projects')
+    projects = [dict(
+        enquiry_id=row[1], quotation=row[3], start_date=row[5],
+        end_date=row[6], project_location=row[8], project_incharge=row[10],
+        contact_number=row[9], email=row[7], notes=row[11]
+    ) for row in c.fetchall()]
+
     conn.close()
-    return render_template('new_project.html', vendors=vendors)
-
+    return render_template('new_project.html', vendors=vendors, projects=projects)
 
 
 # --- ADD MEASUREMENT SHEET PAGE ---
