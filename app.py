@@ -213,22 +213,24 @@ def new_project():
     c = conn.cursor()
 
     if request.method == 'POST':
-        enquiry_id = request.form['enquiry_id']
-        vendor_name = request.form['vendor_name']
-        quotation = request.form['quotation']
-        gst = request.form['gst']
-        start_date = request.form['start_date']
-        address = request.form['address']
-        end_date = request.form['end_date']
-        email = request.form['email']
-        project_location = request.form['project_location']
-        contact_number = request.form['contact_number']
-        project_incharge = request.form['project_incharge']
-        notes = request.form['notes']
-        drawing = request.files['drawing']
+        enquiry_id = request.form.get('enquiry_id')
+        vendor_name = request.form.get('vendor_name')
+        quotation = request.form.get('quotation')
+        gst = request.form.get('gst')
+        start_date = request.form.get('start_date')
+        address = request.form.get('address')
+        end_date = request.form.get('end_date')
+        email = request.form.get('email')
+        project_location = request.form.get('project_location')
+        contact_number = request.form.get('contact_number')
+        project_incharge = request.form.get('project_incharge')
+        notes = request.form.get('notes')
+        drawing = request.files.get('drawing')
 
         drawing_filename = ''
-        if drawing:
+        if drawing and drawing.filename:
+            # Ensure uploads directory exists
+            os.makedirs('uploads', exist_ok=True)
             drawing_filename = drawing.filename
             drawing.save(os.path.join('uploads', drawing_filename))
 
@@ -241,25 +243,22 @@ def new_project():
                    end_date, email, project_location, contact_number, 
                    project_incharge, notes, drawing_filename))
         conn.commit()
-        conn.close()
-        return redirect(url_for('new_project'))
 
-    # GET request
+    # GET or after insert
     c.execute('SELECT * FROM vendors')
-    vendors = [dict(vendor_name=row[1], gst=row[2], address=row[3]) for row in c.fetchall()]
+    vendors = [dict(name=row[1], gst=row[2], address=row[3]) for row in c.fetchall()]
 
     c.execute('SELECT * FROM projects')
     projects = [dict(
         enquiry_id=row[1], vendor_name=row[2], quotation=row[3], gst=row[4],
         start_date=row[5], address=row[6], end_date=row[7], email=row[8],
         project_location=row[9], contact_number=row[10], project_incharge=row[11],
-        notes=row[12]
+        notes=row[12], drawing=row[13]
     ) for row in c.fetchall()]
 
     conn.close()
     now = datetime.now()
     return render_template('new_project.html', vendors=vendors, projects=projects, now=now)
-
 # ---------- MEASUREMENT SHEET ----------
 @app.route('/measurement_sheet', methods=['GET', 'POST'])
 def measurement_sheet():
