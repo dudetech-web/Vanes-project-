@@ -166,20 +166,57 @@ def add_dummy_vendors():
 def new_project():
     if 'user' not in session:
         return redirect(url_for('login'))
+
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+
     if request.method == 'POST':
-        name = request.form['name']
-        location = request.form['location']
-        client = request.form['client']
+        enquiry_id = request.form['enquiry_id']
+        vendor_name = request.form['vendor_name']
+        quotation = request.form['quotation']
+        gst = request.form['gst']
         start_date = request.form['start_date']
-        conn = sqlite3.connect(DB_NAME)
-        c = conn.cursor()
-        c.execute('INSERT INTO projects (name, location, client, start_date) VALUES (?, ?, ?, ?)',
-                  (name, location, client, start_date))
+        address = request.form['address']
+        end_date = request.form['end_date']
+        email = request.form['email']
+        project_location = request.form['project_location']
+        contact_number = request.form['contact_number']
+        project_incharge = request.form['project_incharge']
+        notes = request.form['notes']
+        drawing = request.files['drawing']
+
+        drawing_filename = ''
+        if drawing:
+            drawing_filename = drawing.filename
+            drawing.save(os.path.join('uploads', drawing_filename))
+
+        c.execute('''INSERT INTO projects (
+                        enquiry_id, vendor_name, quotation, gst, start_date, address,
+                        end_date, email, project_location, contact_number, 
+                        project_incharge, notes, drawing
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                  (enquiry_id, vendor_name, quotation, gst, start_date, address,
+                   end_date, email, project_location, contact_number, 
+                   project_incharge, notes, drawing_filename))
         conn.commit()
         conn.close()
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('new_project'))
+
+    # GET request
+    c.execute('SELECT * FROM vendors')
+    vendors = [dict(vendor_name=row[1], gst=row[2], address=row[3]) for row in c.fetchall()]
+
+    c.execute('SELECT * FROM projects')
+    projects = [dict(
+        enquiry_id=row[1], vendor_name=row[2], quotation=row[3], gst=row[4],
+        start_date=row[5], address=row[6], end_date=row[7], email=row[8],
+        project_location=row[9], contact_number=row[10], project_incharge=row[11],
+        notes=row[12]
+    ) for row in c.fetchall()]
+
+    conn.close()
     now = datetime.now()
-    return render_template('new_project.html', now=now)
+    return render_template('new_project.html', vendors=vendors, projects=projects, now=now)
 
 # ---------- MEASUREMENT SHEET ----------
 @app.route('/measurement_sheet', methods=['GET', 'POST'])
