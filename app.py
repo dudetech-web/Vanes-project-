@@ -118,6 +118,20 @@ def insert_dummy_vendors():
     conn.close()
     return "Dummy vendors inserted."
 
+
+@app.route('/get_vendor_info', methods=['POST'])
+def get_vendor_info():
+    vendor_name = request.form.get('vendor_name')
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute('SELECT gst, address FROM vendors WHERE name = ?', (vendor_name,))
+    row = c.fetchone()
+    conn.close()
+    if row:
+        return jsonify({'gst': row[0], 'address': row[1]})
+    else:
+        return jsonify({'gst': '', 'address': ''})
+
 # ---------- CREATE ADMIN ----------
 @app.route('/create_admin')
 def create_admin():
