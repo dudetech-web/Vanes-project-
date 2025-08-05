@@ -210,7 +210,7 @@ def new_project():
 def add_measurement_sheet():
     if 'user' not in session:
         return redirect(url_for('login'))
-    return render_template('add_measurement_sheet.html')
+    return render_template('measurement_sheet.html')
 
 
 # --- ENQUIRY SUMMARY PAGE ---
@@ -226,7 +226,7 @@ def enquiry_summary():
 def enquiry_progress_table():
     if 'user' not in session:
         return redirect(url_for('login'))
-    return render_template('enquiry_progress_table.html')
+    return render_template('enquiry_progress.html')
 
 
 # --- PRODUCTION NEW PROJECT PAGE ---
@@ -234,7 +234,7 @@ def enquiry_progress_table():
 def production_new_project():
     if 'user' not in session:
         return redirect(url_for('login'))
-    return render_template('production_new_project.html')
+    return render_template('production_project.html')
 
 
 # --- PRODUCTION SUMMARY PAGE ---
@@ -250,7 +250,7 @@ def production_summary():
 def production_progress_table():
     if 'user' not in session:
         return redirect(url_for('login'))
-    return render_template('production_progress_table.html')
+    return render_template('production_progress.html')
 
 
 # --- INSERT DUMMY VENDORS (PERMANENT) ---
