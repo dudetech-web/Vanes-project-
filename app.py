@@ -344,7 +344,7 @@ def production_new_project():
     c.execute('SELECT id, name FROM projects')
     projects = c.fetchall()
     conn.close()
-    return render_template('production_new_project.html', projects=projects)
+    return render_template('production_project.html', projects=projects)
 
 # ---------- RUN ----------
 if __name__ == '__main__':
