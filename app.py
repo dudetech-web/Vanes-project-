@@ -99,6 +99,25 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
+
+
+@app.route('/insert_dummy_vendors')
+def insert_dummy_vendors():
+    dummy_vendors = [
+        ('ABC HVAC Pvt Ltd', 'GSTABC1234', 'Chennai, Tamil Nadu'),
+        ('Cooling Masters', 'GSTCOOL5678', 'Bangalore, Karnataka'),
+        ('Duct Experts', 'GSTDCT9101', 'Hyderabad, Telangana'),
+        ('FreshAir Solutions', 'GSTFRSH1122', 'Mumbai, Maharashtra'),
+        ('AirFlow Engineers', 'GSTAIR3344', 'Pune, Maharashtra')
+    ]
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    for name, gst, address in dummy_vendors:
+        c.execute('INSERT OR IGNORE INTO vendors (vendor_name, gst, address) VALUES (?, ?, ?)', (name, gst, address))
+    conn.commit()
+    conn.close()
+    return "Dummy vendors inserted."
+
 # ---------- CREATE ADMIN ----------
 @app.route('/create_admin')
 def create_admin():
