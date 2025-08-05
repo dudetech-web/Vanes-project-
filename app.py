@@ -8,7 +8,7 @@ app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
 DB_NAME = 'vanes.db'
 
-# ---------- INITIAL SETUP ----------
+# ---------- INITIAL DB SETUP ----------
 def init_db():
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
@@ -89,7 +89,7 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
-# ---------- ADMIN USER CREATION ----------
+# ---------- CREATE ADMIN ----------
 @app.route('/create_admin')
 def create_admin():
     hashed = hashlib.sha256("admin123".encode()).hexdigest()
@@ -107,7 +107,7 @@ def dashboard():
         return redirect(url_for('login'))
     return render_template('dashboard.html')
 
-# ---------- EMPLOYEE ----------
+# ---------- EMPLOYEE REGISTRATION ----------
 @app.route('/employee_registration', methods=['GET', 'POST'])
 def employee_registration():
     if 'user' not in session:
@@ -130,7 +130,7 @@ def employee_registration():
         return redirect(url_for('dashboard'))
     return render_template('employee_registration.html')
 
-# ---------- VENDOR ----------
+# ---------- VENDOR REGISTRATION ----------
 @app.route('/vendor_registration', methods=['GET', 'POST'])
 def vendor_registration():
     if 'user' not in session:
@@ -152,8 +152,8 @@ def add_dummy_vendors():
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
     vendors = [
-        ('VendorX', 'GSTX123', 'PANX456', 'Axis Bank', 'Branch1', '1234567890', 'IFSC001', 'Chennai'),
-        ('VendorY', 'GSTY123', 'PANY456', 'HDFC Bank', 'Branch2', '0987654321', 'IFSC002', 'Bangalore')
+        ('Vendor A', 'GST001', 'PAN001', 'Axis Bank', 'Chennai', '1234567890', 'IFSC001', 'Chennai Address'),
+        ('Vendor B', 'GST002', 'PAN002', 'HDFC Bank', 'Bangalore', '2345678901', 'IFSC002', 'Bangalore Address')
     ]
     c.executemany('''INSERT INTO vendors (name, gst, pan, bank_name, branch, account_no, ifsc, address)
                      VALUES (?, ?, ?, ?, ?, ?, ?, ?)''', vendors)
@@ -161,7 +161,7 @@ def add_dummy_vendors():
     conn.close()
     return "Dummy vendors added!"
 
-# ---------- PROJECT ----------
+# ---------- NEW PROJECT ----------
 @app.route('/new_project', methods=['GET', 'POST'])
 def new_project():
     if 'user' not in session:
@@ -181,7 +181,7 @@ def new_project():
     now = datetime.now()
     return render_template('new_project.html', now=now)
 
-# ---------- MEASUREMENT ----------
+# ---------- MEASUREMENT SHEET ----------
 @app.route('/measurement_sheet', methods=['GET', 'POST'])
 def measurement_sheet():
     if 'user' not in session:
@@ -232,6 +232,32 @@ def measurement_sheet():
     return render_template('measurement_sheet.html', projects=projects)
 
 # ---------- ENQUIRY ----------
+@app.route('/enquiry_summary', methods=['GET', 'POST'])
+def enquiry_summary():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute('SELECT name FROM vendors')
+    vendors = [row[0] for row in c.fetchall()]
+    conn.close()
+
+    if request.method == 'POST':
+        form = request.form
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+        c.execute('''INSERT INTO enquiry_progress 
+            (enquiry_id, vendor, location, start_date, end_date, incharge, stage, status, remarks) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+            (form['enquiry_id'], form['vendor'], form['location'], form['start_date'], form['end_date'],
+             form['incharge'], form['stage'], form['status'], form['remarks']))
+        conn.commit()
+        conn.close()
+        return redirect(url_for('enquiry_progress'))
+
+    return render_template('enquiry_summary.html', vendors=vendors)
+
 @app.route('/enquiry_progress')
 def enquiry_progress():
     if 'user' not in session:
@@ -243,32 +269,6 @@ def enquiry_progress():
     rows = c.fetchall()
     conn.close()
     return render_template('enquiry_progress_table.html', progress_data=rows)
-
-@app.route('/enquiry_progress_form', methods=['GET', 'POST'])
-def enquiry_progress_form():
-    if 'user' not in session:
-        return redirect(url_for('login'))
-
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute('SELECT name FROM vendors')
-    vendors = [row[0] for row in c.fetchall()]
-    conn.close()
-
-    if request.method == 'POST':
-        data = {key: request.form.get(key) for key in request.form}
-        conn = sqlite3.connect(DB_NAME)
-        c = conn.cursor()
-        c.execute('''INSERT INTO enquiry_progress 
-            (enquiry_id, vendor, location, start_date, end_date, incharge, stage, status, remarks) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-            (data['enquiry_id'], data['vendor'], data['location'], data['start_date'], data['end_date'],
-             data['incharge'], data['stage'], data['status'], data['remarks']))
-        conn.commit()
-        conn.close()
-        return redirect(url_for('enquiry_progress'))
-    
-    return render_template('enquiry_summary.html', vendors=vendors)
 
 # ---------- PRODUCTION ----------
 @app.route('/production_summary')
@@ -288,8 +288,8 @@ def production_progress():
         return redirect(url_for('login'))
     return render_template('production_progress_table.html')
 
-@app.route('/production_project')
-def production_project():
+@app.route('/production_new_project')
+def production_new_project():
     if 'user' not in session:
         return redirect(url_for('login'))
     conn = sqlite3.connect(DB_NAME)
