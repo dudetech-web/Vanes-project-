@@ -83,21 +83,8 @@
         }
     </style>
 
-    <script>
-        function autofillVendor() {
-            const selected = document.getElementById('vendor_name').value;
-            fetch('/get_vendor_info', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'vendor_name=' + encodeURIComponent(selected)
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('gst').value = data.gst || '';
-                document.getElementById('address').value = data.address || '';
-            });
-        }
-    </script>
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 </head>
 <body>
 
@@ -111,12 +98,12 @@
 
             <div>
                 <label>Vendor Name</label>
-                <input list="vendor_list" name="vendor_name" id="vendor_name" onchange="autofillVendor()" placeholder="Search vendors...">
-                <datalist id="vendor_list">
+                <select name="vendor_name" id="vendor_name" class="select2" onchange="autofillVendor()">
+                    <option value="">Select vendor...</option>
                     {% for v in vendors %}
-                        <option value="{{ v.vendor_name }}">
+                        <option value="{{ v.vendor_name }}">{{ v.vendor_name }}</option>
                     {% endfor %}
-                </datalist>
+                </select>
             </div>
 
             <div>
@@ -214,6 +201,29 @@
         <p>Checked By: Project Manager ({{ now.strftime('%Y-%m-%d %H:%M') }})</p>
         <p>Approved By: MD ({{ now.strftime('%Y-%m-%d %H:%M') }})</p>
     </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('.select2').select2();
+        });
+
+        function autofillVendor() {
+            const selected = document.getElementById('vendor_name').value;
+            fetch('/get_vendor_info', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'vendor_name=' + encodeURIComponent(selected)
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('gst').value = data.gst || '';
+                document.getElementById('address').value = data.address || '';
+            });
+        }
+    </script>
 
 </body>
 </html>
