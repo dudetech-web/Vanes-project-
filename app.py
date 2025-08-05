@@ -164,18 +164,31 @@ def employee_registration():
 def vendor_registration():
     if 'user' not in session:
         return redirect(url_for('login'))
+
     if request.method == 'POST':
-        data = {key: request.form.get(key) for key in request.form}
+        name = request.form.get('name')
+        gst = request.form.get('gst')
+        pan = request.form.get('pan')
+        bank_name = request.form.get('bank_name')
+        branch = request.form.get('branch')
+        account_no = request.form.get('account_no')
+        ifsc = request.form.get('ifsc')
+        address = request.form.get('address')
+
+        if not all([name, gst, pan, bank_name, branch, account_no, ifsc, address]):
+            return render_template('vendor_registration.html', error="Please fill all fields.")
+
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
-        c.execute('''INSERT INTO vendors (name, gst, pan, bank_name, branch, account_no, ifsc, address)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
-                  tuple(data.values()))
+        c.execute('''INSERT INTO vendors 
+            (name, gst, pan, bank_name, branch, account_no, ifsc, address)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+            (name, gst, pan, bank_name, branch, account_no, ifsc, address))
         conn.commit()
         conn.close()
         return redirect(url_for('dashboard'))
-    return render_template('vendor_registration.html')
 
+    return render_template('vendor_registration.html')
 @app.route('/add_dummy_vendors')
 def add_dummy_vendors():
     conn = sqlite3.connect(DB_NAME)
