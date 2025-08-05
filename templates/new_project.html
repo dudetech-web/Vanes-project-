@@ -76,6 +76,10 @@
             margin-top: 20px;
         }
 
+        .action-btns button {
+            margin: 2px;
+        }
+
         @media (max-width: 768px) {
             .form-grid {
                 grid-template-columns: 1fr;
@@ -185,21 +189,14 @@
                 <td>{{ p.contact_number }}</td>
                 <td>{{ p.email }}</td>
                 <td>{{ p.notes }}</td>
-                <td>
-                    <button class="btn">Save</button>
+                <td class="action-btns">
+                    <button class="btn">Edit</button>
                     <button class="btn">Delete</button>
-                    <button class="btn">Add Sheet</button>
+                    <button class="btn">Add Measurement Sheet</button>
                 </td>
             </tr>
             {% endfor %}
         </table>
-    </div>
-
-    <div class="section">
-        <h3>Approvals</h3>
-        <p>Prepared By: Design Engineer ({{ now.strftime('%Y-%m-%d %H:%M') }})</p>
-        <p>Checked By: Project Manager ({{ now.strftime('%Y-%m-%d %H:%M') }})</p>
-        <p>Approved By: MD ({{ now.strftime('%Y-%m-%d %H:%M') }})</p>
     </div>
 
     <!-- Scripts -->
