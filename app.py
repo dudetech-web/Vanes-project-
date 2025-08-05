@@ -411,19 +411,28 @@ def production_new_project():
     return render_template('production_project.html', projects=projects)
 
 
-def insert_dummy_vendor():
+def insert_dummy_vendors_permanently():
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
-    c.execute("SELECT COUNT(*) FROM vendors WHERE name = 'vend6'")
-    if c.fetchone()[0] == 0:
-        c.execute('''INSERT INTO vendors (name, gst, pan, bank_name, branch, account_no, ifsc, address)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
-                  ('vend6', 'GSTVEND6', 'PANVEND6', 'Dummy Bank', 'Dummy Branch', '1234567890', 'IFSC000VEND6', 'Dummy Address 6'))
-        conn.commit()
+
+    dummy_vendors = [
+        ('vend1', 'GSTVEND1', 'PANVEND1', 'Bank1', 'Branch1', '1111111111', 'IFSC0001', 'Address 1'),
+        ('vend2', 'GSTVEND2', 'PANVEND2', 'Bank2', 'Branch2', '2222222222', 'IFSC0002', 'Address 2'),
+        ('vend3', 'GSTVEND3', 'PANVEND3', 'Bank3', 'Branch3', '3333333333', 'IFSC0003', 'Address 3'),
+        ('vend4', 'GSTVEND4', 'PANVEND4', 'Bank4', 'Branch4', '4444444444', 'IFSC0004', 'Address 4'),
+        ('vend5', 'GSTVEND5', 'PANVEND5', 'Bank5', 'Branch5', '5555555555', 'IFSC0005', 'Address 5'),
+        ('vend6', 'GSTVEND6', 'PANVEND6', 'Dummy Bank', 'Dummy Branch', '1234567890', 'IFSC000VEND6', 'Dummy Address 6')
+    ]
+
+    for v in dummy_vendors:
+        c.execute("SELECT COUNT(*) FROM vendors WHERE name = ?", (v[0],))
+        if c.fetchone()[0] == 0:
+            c.execute('''INSERT INTO vendors (name, gst, pan, bank_name, branch, account_no, ifsc, address)
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?)''', v)
+
+    conn.commit()
     conn.close()
 
-insert_dummy_vendor()
-
-# ---------- RUN ----------
 if __name__ == '__main__':
+    insert_dummy_vendors_permanently()
     app.run(debug=True)
