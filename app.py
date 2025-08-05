@@ -149,7 +149,9 @@ def get_vendor_info():
     return jsonify({'gst': '', 'address': ''})
 
 
-# --- NEW PROJECT PAGE ---
+# --- NEW PROJECT PAGE --
+
+
 @app.route('/new_project', methods=['GET', 'POST'])
 def new_project():
     if 'user' not in session:
@@ -157,38 +159,48 @@ def new_project():
 
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
+
     if request.method == 'POST':
-        data = (
-            request.form['enquiry_id'], request.form['vendor_name'],
-            request.form['quotation'], request.form['gst'],
-            request.form['start_date'], request.form['address'],
-            request.form['end_date'], request.form['email'],
-            request.form['project_location'], request.form['contact_number'],
-            request.form['project_incharge'], request.form['notes']
-        )
-        # Save uploaded drawing
+        enquiry_id = request.form.get('enquiry_id')
+        vendor_name = request.form.get('vendor_name')
+        quotation = request.form.get('quotation')
+        gst = request.form.get('gst')
+        start_date = request.form.get('start_date')
+        address = request.form.get('address')
+        end_date = request.form.get('end_date')
+        email = request.form.get('email')
+        project_location = request.form.get('project_location')
+        contact_number = request.form.get('contact_number')
+        project_incharge = request.form.get('project_incharge')
+        notes = request.form.get('notes')
+
         drawing_path = ""
         if 'drawing' in request.files:
             file = request.files['drawing']
             if file.filename:
                 filename = secure_filename(file.filename)
+                os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
                 file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
                 drawing_path = filename
-        data += (drawing_path,)
 
+        # Insert into the database
         c.execute('''INSERT INTO projects (
-            enquiry_id, vendor_name, quotation, gst, start_date, address,
-            end_date, email, project_location, contact_number, project_incharge,
-            notes, drawing_path
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', data)
+                        enquiry_id, vendor_name, quotation, gst, start_date, address,
+                        end_date, email, project_location, contact_number, 
+                        project_incharge, notes, drawing_path
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                  (enquiry_id, vendor_name, quotation, gst, start_date, address,
+                   end_date, email, project_location, contact_number,
+                   project_incharge, notes, drawing_path))
         conn.commit()
+        conn.close()
+        return redirect(url_for('new_project'))
 
-    c.execute("SELECT * FROM projects")
-    projects = c.fetchall()
-    c.execute("SELECT vendor_name FROM vendors")
-    vendors = c.fetchall()
+    # GET request: Load vendors for dropdown
+    c.execute('SELECT name FROM vendors')
+    vendors = [row[0] for row in c.fetchall()]
     conn.close()
-    return render_template('new_project.html', projects=projects, vendors=vendors)
+    return render_template('new_project.html', vendors=vendors)
 
 
 
