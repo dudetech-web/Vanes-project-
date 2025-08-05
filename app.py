@@ -68,22 +68,32 @@ init_db()
 @app.route('/')
 def login():
     return render_template('login.html')
-
 @app.route('/login', methods=['POST'])
 def do_login():
     username = request.form['username']
     password = request.form['password']
     hashed = hashlib.sha256(password.encode()).hexdigest()
+
+    # ✅ Check permanent dummy credentials first
+    dummy_username = 'demo'
+    dummy_password_hash = hashlib.sha256('demo123'.encode()).hexdigest()
+
+    if username == dummy_username and hashed == dummy_password_hash:
+        session['user'] = dummy_username
+        return redirect(url_for('dashboard'))
+
+    # 🔒 Check database if not dummy
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
     c.execute('SELECT * FROM users WHERE username=? AND password=?', (username, hashed))
     user = c.fetchone()
     conn.close()
+
     if user:
         session['user'] = username
         return redirect(url_for('dashboard'))
-    return render_template('login.html', error='Invalid credentials')
 
+    return render_template('login.html', error='Invalid credentials')
 @app.route('/logout')
 def logout():
     session.clear()
