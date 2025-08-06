@@ -3,49 +3,43 @@
 <head>
     <title>Add Measurement Sheet</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f0f2f5; }
-        h2 { color: #333; }
-        .container { display: flex; gap: 20px; }
-        .left-panel, .right-panel { flex: 1; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        label { margin-top: 10px; display: block; font-weight: bold; }
-        input, select { width: 100%; padding: 6px; margin-top: 5px; box-sizing: border-box; }
-        button { padding: 8px 14px; margin-top: 10px; border: none; border-radius: 4px; cursor: pointer; }
-        .btn { margin-right: 10px; }
-        .btn-primary { background: #007bff; color: #fff; }
-        .btn-secondary { background: #6c757d; color: #fff; }
-        .btn-success { background: #28a745; color: #fff; }
-        .btn-warning { background: #ffc107; color: #000; }
-        .btn-danger { background: #dc3545; color: #fff; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #fff; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: center; font-size: 14px; }
-        .signature-section { margin-top: 30px; padding: 20px; background: #fff; border-radius: 6px; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
-        .inline-edit { width: 60px; }
-        #toast {
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { display: flex; }
+        .left-panel, .right-panel { width: 50%; padding: 10px; }
+        label { display: block; margin-top: 10px; }
+        input, select { width: 100%; padding: 6px; margin-top: 5px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        table, th, td { border: 1px solid black; }
+        th, td { padding: 8px; text-align: center; }
+        button { margin: 5px; padding: 6px 12px; }
+        .signature-section { margin-top: 30px; }
+        input.inline-edit { width: 60px; }
+        .toast {
             visibility: hidden;
             min-width: 250px;
             margin-left: -125px;
             background-color: #333;
             color: #fff;
             text-align: center;
-            border-radius: 8px;
             padding: 12px;
             position: fixed;
             z-index: 1;
             left: 50%;
             bottom: 30px;
-            font-size: 16px;
+            font-size: 14px;
+            border-radius: 5px;
         }
-        #toast.show {
+        .toast.show {
             visibility: visible;
-            animation: fadein 0.5s, fadeout 0.5s 2.5s;
+            animation: fadein 0.5s, fadeout 0.5s 3s;
         }
         @keyframes fadein {
-            from { bottom: 0; opacity: 0; }
-            to { bottom: 30px; opacity: 1; }
+            from {bottom: 0; opacity: 0;} 
+            to {bottom: 30px; opacity: 1;}
         }
         @keyframes fadeout {
-            from { bottom: 30px; opacity: 1; }
-            to { bottom: 0; opacity: 0; }
+            from {bottom: 30px; opacity: 1;} 
+            to {bottom: 0; opacity: 0;}
         }
     </style>
 </head>
@@ -63,95 +57,148 @@
 
         <div class="right-panel">
             <form method="POST" action="/add_measurement_sheet">
-                <label>Duct No:</label><input type="text" name="duct_no">
+                <label>Duct No:</label>
+                <input type="text" name="duct_no" required>
+
                 <label>Duct Type:</label>
-                <select name="duct_type">
-                    <option value="ST">ST</option>
-                    <option value="RED">RED</option>
-                    <option value="DM">DM</option>
-                    <option value="OFFSET">OFFSET</option>
-                    <option value="SHOE">SHOE</option>
-                    <option value="VANES">VANES</option>
-                    <option value="ELB">ELB</option>
+                <select name="duct_type" required>
+                    <option value="st">ST</option>
+                    <option value="elb">ELB</option>
+                    <option value="red">RED</option>
+                    <option value="dm">DM</option>
+                    <option value="offset">OFFSET</option>
+                    <option value="shoe">SHOE</option>
+                    <option value="vanes">VANES</option>
                 </select>
-                <label>W1:</label><input type="text" name="w1">
-                <label>H1:</label><input type="text" name="h1">
-                <label>W2:</label><input type="text" name="w2">
-                <label>H2:</label><input type="text" name="h2">
-                <label>Length/Radius:</label><input type="text" name="length_radius">
-                <label>Degree/Offset:</label><input type="text" name="degree_offset">
-                <label>Quantity:</label><input type="text" name="quantity">
-                <label>Factor (if applicable):</label><input type="text" name="factor">
-                <button class="btn btn-success" type="submit" onclick="showToast('Entry added successfully')">Add Entry</button>
+
+                <label>W1:</label><input type="number" name="w1" step="any">
+                <label>H1:</label><input type="number" name="h1" step="any">
+                <label>W2:</label><input type="number" name="w2" step="any">
+                <label>H2:</label><input type="number" name="h2" step="any">
+                <label>Length/Radius:</label><input type="number" name="length" step="any">
+                <label>Degree/Offset:</label><input type="number" name="degree" step="any">
+                <label>Quantity:</label><input type="number" name="quantity" step="1">
+                <label>Factor (if applicable):</label><input type="number" name="factor" step="any">
+
+                <button type="submit">Add Entry</button>
             </form>
         </div>
     </div>
 
+    <hr>
     <h3>Live Table</h3>
     <table>
         <thead>
             <tr>
                 <th>Duct No</th><th>Duct Type</th><th>W1</th><th>H1</th><th>W2</th><th>H2</th>
                 <th>Length/Radius</th><th>Degree/Offset</th><th>Quantity</th><th>Area</th><th>Gauge</th>
-                <th>24G</th><th>22G</th><th>20G</th><th>18G</th><th>Cleat</th><th>Gasket</th><th>Corner Pieces</th><th>Actions</th>
+                <th>24G</th><th>22G</th><th>20G</th><th>18G</th><th>Cleat</th><th>Gasket</th>
+                <th>Corner Pieces</th><th>Actions</th>
             </tr>
         </thead>
         <tbody>
-            <!-- Entries populated from backend -->
+            {% for entry in entries %}
+            <tr id="row-{{ entry.id }}">
+                <td data-editable>{{ entry.duct_no }}</td>
+                <td data-editable>{{ entry.duct_type }}</td>
+                <td data-editable>{{ entry.w1 }}</td>
+                <td data-editable>{{ entry.h1 }}</td>
+                <td data-editable>{{ entry.w2 }}</td>
+                <td data-editable>{{ entry.h2 }}</td>
+                <td data-editable>{{ entry.length }}</td>
+                <td data-editable>{{ entry.degree }}</td>
+                <td data-editable>{{ entry.quantity }}</td>
+                <td data-editable>{{ entry.area }}</td>
+                <td data-editable>{{ entry.gauge }}</td>
+                <td data-editable>{{ entry.cleat_24g }}</td>
+                <td data-editable>{{ entry.cleat_22g }}</td>
+                <td data-editable>{{ entry.cleat_20g }}</td>
+                <td data-editable>{{ entry.cleat_18g }}</td>
+                <td data-editable>{{ entry.cleat }}</td>
+                <td data-editable>{{ entry.gasket }}</td>
+                <td data-editable>{{ entry.corner_pieces }}</td>
+                <td class="action-cell">
+                    <button onclick="editRow('row-{{ entry.id }}')">Edit</button>
+                    <button onclick="confirmDelete('{{ entry.id }}')">Delete</button>
+                </td>
+            </tr>
+            {% endfor %}
         </tbody>
     </table>
 
     <div class="signature-section">
-        <button class="btn btn-primary" onclick="fillApproval('prepared')">Prepared By</button>
-        <button class="btn btn-warning" onclick="fillApproval('checked')">Checked By</button>
-        <button class="btn btn-success" onclick="fillApproval('approved')">Approved By</button>
+        <button onclick="setSignature('prepared')">Prepared By</button>
+        <button onclick="setSignature('checked')">Checked By</button>
+        <button onclick="setSignature('approved')">Approved By</button>
 
-        <div id="prepared_by" style="margin-top:10px;"></div>
-        <div id="checked_by" style="margin-top:10px;"></div>
-        <div id="approved_by" style="margin-top:10px;"></div>
+        <p><strong>Prepared By:</strong> <span id="prepared_by">Design Engineer – {{ timestamp }}</span></p>
+        <p><strong>Checked By:</strong> <span id="checked_by">Project Manager – {{ timestamp }}</span></p>
+        <p><strong>Approved By:</strong> <span id="approved_by">Managing Director – {{ timestamp }}</span></p>
     </div>
 
     <div style="margin-top: 20px;">
-        <button class="btn btn-info" onclick="exportToExcel()">Export to Excel</button>
-        <button class="btn btn-secondary" onclick="exportToPDF()">Export to PDF</button>
-        <button class="btn btn-danger" onclick="window.print()">Print</button>
-        <button class="btn btn-success" onclick="submitMeasurementSheet(); showToast('Measurement Sheet Submitted')">Submit</button>
+        <button onclick="exportToExcel()">Export to Excel</button>
+        <button onclick="exportToPDF()">Export to PDF</button>
+        <button onclick="window.print()">Print</button>
+        <button onclick="submitMeasurementSheet()">Submit</button>
     </div>
 
-    <div id="toast"></div>
+    <div id="toast" class="toast"></div>
 
     <script>
-        function fillApproval(role) {
-            const now = new Date();
-            const formatted = now.toISOString().slice(0, 19).replace("T", " ");
-            const titles = {
-                prepared: "Design Engineer",
-                checked: "Project Manager",
-                approved: "Managing Director"
-            };
-            document.getElementById(`${role}_by`).innerHTML = `<strong>${titles[role]}:</strong> ${formatted}`;
-            showToast(`${titles[role]} signed at ${formatted}`);
+        function confirmDelete(id) {
+            if (confirm('Are you sure you want to delete this entry?')) {
+                window.location.href = '/delete_entry/' + id;
+            }
+        }
+
+        function editRow(rowId) {
+            const row = document.getElementById(rowId);
+            const cells = row.querySelectorAll('td[data-editable]');
+            cells.forEach(cell => {
+                const val = cell.innerText;
+                cell.innerHTML = `<input class="inline-edit" value="${val}" />`;
+            });
+            const actionCell = row.querySelector('.action-cell');
+            actionCell.innerHTML = `<button onclick="saveRow('${rowId}')">Save</button>`;
+        }
+
+        function saveRow(rowId) {
+            const row = document.getElementById(rowId);
+            const inputs = row.querySelectorAll('input.inline-edit');
+            const updated = Array.from(inputs).map(input => input.value);
+            showToast("Saving: " + updated.join(", "));
+            // Send update via fetch() here if backend supports it
+        }
+
+        function setSignature(role) {
+            const now = new Date().toLocaleString();
+            if (role === 'prepared') {
+                document.getElementById('prepared_by').innerText = `Design Engineer – ${now}`;
+            } else if (role === 'checked') {
+                document.getElementById('checked_by').innerText = `Project Manager – ${now}`;
+            } else if (role === 'approved') {
+                document.getElementById('approved_by').innerText = `Managing Director – ${now}`;
+            }
         }
 
         function showToast(message) {
             const toast = document.getElementById("toast");
             toast.textContent = message;
-            toast.className = "show";
-            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+            toast.className = "toast show";
+            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 4000);
         }
 
         function exportToExcel() {
-            showToast("Exported to Excel");
             window.location.href = "/export_excel";
         }
 
         function exportToPDF() {
-            showToast("Exported to PDF");
             window.location.href = "/export_pdf";
         }
 
         function submitMeasurementSheet() {
-            showToast("Measurement Sheet Submitted");
+            showToast("Measurement Sheet submitted successfully.");
         }
     </script>
 </body>
