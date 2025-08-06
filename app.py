@@ -428,6 +428,76 @@ def delete_measurement_row(row_id):
     return jsonify({'status': 'deleted'})
 
 
+
+@app.route('/employee_registration', methods=['GET', 'POST'])
+def employee_registration():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        name = request.form['name']
+        dob = request.form['dob']
+        gender = request.form['gender']
+        marital_status = request.form['marital_status']
+        aadhaar = request.form['aadhaar']
+        pan = request.form['pan']
+        esi = request.form.get('esi')
+        designation = request.form['designation']
+        location = request.form['location']
+        doj = request.form['doj']
+        employment_type = request.form['employment_type']
+        bank_name = request.form.get('bank_name')
+        branch = request.form.get('branch')
+        account_no = request.form.get('account_no')
+        ifsc = request.form.get('ifsc')
+        emergency_name = request.form.get('emergency_name')
+        emergency_relation = request.form.get('emergency_relation')
+        emergency_mobile = request.form.get('emergency_mobile')
+        blood_group = request.form.get('blood_group')
+        allergies = request.form.get('allergies')
+        medical_conditions = request.form.get('medical_conditions')
+        reference_name = request.form.get('reference_name')
+        reference_mobile = request.form.get('reference_mobile')
+        reference_relation = request.form.get('reference_relation')
+
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute("""
+            INSERT INTO employees (
+                name, dob, gender, marital_status, aadhaar, pan, esi,
+                designation, location, doj, employment_type,
+                bank_name, branch, account_no, ifsc,
+                emergency_name, emergency_relation, emergency_mobile,
+                blood_group, allergies, medical_conditions,
+                reference_name, reference_mobile, reference_relation
+            )
+            VALUES (
+                %s, %s, %s, %s, %s, %s, %s,
+                %s, %s, %s, %s,
+                %s, %s, %s, %s,
+                %s, %s, %s,
+                %s, %s, %s,
+                %s, %s, %s
+            )
+        """, (
+            name, dob, gender, marital_status, aadhaar, pan, esi,
+            designation, location, doj, employment_type,
+            bank_name, branch, account_no, ifsc,
+            emergency_name, emergency_relation, emergency_mobile,
+            blood_group, allergies, medical_conditions,
+            reference_name, reference_mobile, reference_relation
+        ))
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return redirect(url_for('dashboard'))
+
+    return render_template('employee_registration.html')
+
+
 # --- EXPORT TO EXCEL ---
 @app.route('/export_measurement_sheet/<int:project_id>')
 def export_measurement_sheet(project_id):
