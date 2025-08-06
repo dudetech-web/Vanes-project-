@@ -419,6 +419,14 @@ def edit_measurement_row(row_id):
     return jsonify({'status': 'success'})
 
 
+
+@app.route('/dispatch')
+def dispatch():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    return render_template('dispatch.html')
+
+
 # --- DELETE MEASUREMENT ROW ---
 @app.route('/delete_measurement_row/<int:row_id>', methods=['POST'])
 def delete_measurement_row(row_id):
