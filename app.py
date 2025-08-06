@@ -342,7 +342,7 @@ def add_measurement_sheet():
     cur.close()
     conn.close()
 
-    return render_template('add_measurement_sheet.html', project_name=project_name, project_id=project_id, sheets=sheets, columns=columns)
+    return render_template('measurement_sheet.html', project_name=project_name, project_id=project_id, sheets=sheets, columns=columns)
 
 
 # --- EDIT MEASUREMENT SHEET ROW ---
@@ -471,13 +471,13 @@ def enquiry_summary():
 def enquiry_progress_table():
     if 'user' not in session:
         return redirect(url_for('login'))
-    return render_template('enquiry_progress_table.html')
+    return render_template('enquiry_progress.html')
 
 @app.route('/production_new_project')
 def production_new_project():
     if 'user' not in session:
         return redirect(url_for('login'))
-    return render_template('production_new_project.html')
+    return render_template('production_project.html')
 
 @app.route('/production_summary')
 def production_summary():
@@ -489,7 +489,7 @@ def production_summary():
 def production_progress_table():
     if 'user' not in session:
         return redirect(url_for('login'))
-    return render_template('production_progress_table.html')
+    return render_template('production_progress.html')
 
 
 # --- DASHBOARD PAGE ---
