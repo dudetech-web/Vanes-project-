@@ -589,6 +589,26 @@ def fabrication():
     return render_template('fabrication.html')
 
 
+
+@app.route('/daily_reports')
+def daily_reports():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    return render_template('daily_reports.html')
+
+@app.route('/weekly_reports')
+def weekly_reports():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    return render_template('weekly_reports.html')
+
+@app.route('/monthly_reports')
+def monthly_reports():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    return render_template('monthly_reports.html')
+
+
 # --- DASHBOARD PAGE ---
 
 
