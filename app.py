@@ -32,9 +32,12 @@ def init_db():
         CREATE TABLE IF NOT EXISTS vendors (
             id SERIAL PRIMARY KEY,
             vendor_name TEXT UNIQUE,
-            gst TEXT, pan TEXT,
-            bank_name TEXT, branch TEXT,
-            account_no TEXT, ifsc TEXT,
+            gst TEXT,
+            pan TEXT,
+            bank_name TEXT,
+            branch TEXT,
+            account_no TEXT,
+            ifsc TEXT,
             address TEXT
         )
     ''')
@@ -59,6 +62,8 @@ def init_db():
         )
     ''')
 
+    conn.commit()
+    conn.close()
     cur.execute('''
         CREATE TABLE IF NOT EXISTS measurement_sheets (
             id SERIAL PRIMARY KEY,
