@@ -493,18 +493,10 @@ def production_progress_table():
 
 
 # --- DASHBOARD PAGE ---
-@app.route('/dashboard')
-def dashboard():
-    if 'user' not in session:
-        return redirect(url_for('login'))
-    return render_template('dashboard.html')
 
 
-# --- LOGOUT ---
-@app.route('/logout')
-def logout():
-    session.pop('user', None)
-    return redirect(url_for('login'))
+
+
 
 
 # --- APP RUN ---
