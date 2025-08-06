@@ -552,10 +552,25 @@ def enquiry_summary():
 
 
 @app.route('/sheet_cutting')
+@login_required
 def sheet_cutting():
-    if 'user' not in session:
-        return redirect(url_for('login'))
-    return render_template('sheet_cutting.html')
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # Sheet Cutting Data
+    cur.execute("SELECT gauge, duct_no, quantity, sheet_cutting FROM sheet_cutting")
+    sheet_cutting_data = [dict(gauge=r[0], duct_no=r[1], quantity=r[2], sheet_cutting=r[3]) for r in cur.fetchall()]
+
+    # Fabrication Data
+    cur.execute("SELECT gauge, duct_no, quantity, fabrication FROM fabrication")
+    fabrication_data = [dict(gauge=r[0], duct_no=r[1], quantity=r[2], fabrication=r[3]) for r in cur.fetchall()]
+
+    cur.close()
+    conn.close()
+
+    return render_template('sheet_cutting.html',
+                           sheet_cutting_data=sheet_cutting_data,
+                           fabrication_data=fabrication_data)
 
 @app.route('/enquiry_progress_table')
 def enquiry_progress_table():
