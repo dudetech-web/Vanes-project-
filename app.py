@@ -20,6 +20,7 @@ def init_db():
     conn = get_db()
     cur = conn.cursor()
 
+    # Admin table
     cur.execute('''
         CREATE TABLE IF NOT EXISTS admin (
             id SERIAL PRIMARY KEY,
@@ -28,6 +29,7 @@ def init_db():
         )
     ''')
 
+    # Vendors table
     cur.execute('''
         CREATE TABLE IF NOT EXISTS vendors (
             id SERIAL PRIMARY KEY,
@@ -42,11 +44,20 @@ def init_db():
         )
     ''')
 
-    # Ensure vendor_name is UNIQUE to support ON CONFLICT
-    cur.execute('''
-        ALTER TABLE vendors ADD CONSTRAINT IF NOT EXISTS unique_vendor_name UNIQUE (vendor_name)
-    ''')
+    # Safely add UNIQUE constraint to vendor_name
+    cur.execute("""
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM pg_constraint WHERE conname = 'unique_vendor_name'
+            ) THEN
+                ALTER TABLE vendors ADD CONSTRAINT unique_vendor_name UNIQUE (vendor_name);
+            END IF;
+        END;
+        $$;
+    """)
 
+    # Projects table
     cur.execute('''
         CREATE TABLE IF NOT EXISTS projects (
             id SERIAL PRIMARY KEY,
@@ -67,12 +78,7 @@ def init_db():
         )
     ''')
 
-    conn.commit()
-    cur.close()
-    conn.close()
-
-    conn.commit()
-    conn.close()
+    # Measurement sheets table
     cur.execute('''
         CREATE TABLE IF NOT EXISTS measurement_sheets (
             id SERIAL PRIMARY KEY,
