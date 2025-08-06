@@ -6,6 +6,10 @@ app = Flask(__name__)
 app.secret_key = 'secret_key'
 DB_NAME = 'database.db'
 
+# ✅ Helper function to get DB connection
+def get_db():
+    return sqlite3.connect(DB_NAME)
+
 def init_db():
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
@@ -57,7 +61,6 @@ def init_db():
             project_id INTEGER
         )
     ''')
-    
 
     conn.commit()
     conn.close()
@@ -83,14 +86,7 @@ def insert_dummy_vendors():
     conn.commit()
     conn.close()
 
-
-
-    
-
-
-
 # Ensure 'drawing_filename' column exists in 'projects' table
-
 def ensure_columns():
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
@@ -106,9 +102,6 @@ init_db()
 ensure_columns()
 insert_permanent_admin()
 insert_dummy_vendors()
-
-
-
 
 
 # --- LOGIN PAGE ---
