@@ -238,6 +238,7 @@ def new_project():
         drawing_filename = None  
         if drawing:  
             drawing_filename = drawing.filename  
+            os.makedirs('uploads', exist_ok=True)
             drawing.save(os.path.join('uploads', drawing_filename))  
 
         c.execute('''  
@@ -254,29 +255,36 @@ def new_project():
         ))  
         conn.commit()  
 
-    # Fetch vendors  
+    # Fetch vendors (run this first)
     c.execute("SELECT vendor_name FROM vendors")  
     vendors = [{'vendor_name': row[0]} for row in c.fetchall()]  
 
-    # Fetch existing projects  
+    # Now fetch projects (run the query again)
     c.execute('SELECT * FROM projects')  
-    projects = [dict(  
-        id=row[0],  # Needed for action buttons
-        enquiry_id=row[1], 
-        quotation=row[3], 
-        start_date=row[5],  
-        end_date=row[6], 
-        project_location=row[8], 
-        project_incharge=row[10],  
-        contact_number=row[9], 
-        email=row[7], 
-        notes=row[11]  
-    ) for row in c.fetchall()]  
+    project_rows = c.fetchall()
+
+    # Convert each row to dictionary
+    projects = []
+    for row in project_rows:
+        projects.append({
+            'id': row[0],
+            'enquiry_id': row[1],
+            'vendor_name': row[2],
+            'quotation': row[3],
+            'gst': row[4],
+            'start_date': row[5],
+            'address': row[6],
+            'end_date': row[7],
+            'email': row[8],
+            'project_location': row[9],
+            'contact_number': row[10],
+            'project_incharge': row[11],
+            'notes': row[12],
+            'drawing_filename': row[13],
+        })
 
     conn.close()  
     return render_template('new_project.html', vendors=vendors, projects=projects)
-# --- ADD MEASUREMENT SHEET PAGE ---
-
 
 
 
