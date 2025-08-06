@@ -278,6 +278,8 @@ def new_project():
 
 
 # Measurement sheet route
+
+
 @app.route('/add_measurement_sheet', methods=['GET', 'POST'])
 def add_measurement_sheet():
     if 'user' not in session:
@@ -288,7 +290,7 @@ def add_measurement_sheet():
 
     if request.method == 'POST':
         duct_no = request.form['duct_no']
-        duct_type = request.form['duct_type']
+        duct_type = request.form['duct_type'].lower()
         w1 = float(request.form['w1'] or 0)
         h1 = float(request.form['h1'] or 0)
         w2 = float(request.form['w2'] or 0)
@@ -298,24 +300,23 @@ def add_measurement_sheet():
         quantity = int(request.form['quantity'] or 1)
         factor = float(request.form['factor'] or 1)
 
-        # Area calculation based on type
         area = 0
         if duct_type == 'st':
-            area = 2 * (w1 + h1) / 1000 * (length / 1000) * quantity
+            area = 2 * ((w1 + h1) / 1000) * (length / 1000) * quantity
         elif duct_type == 'red':
-            area = (w1 + h1 + w2 + h2) / 1000 * (length / 1000) * quantity * factor
+            area = ((w1 + h1 + w2 + h2) / 2 / 1000) * (length / 1000) * quantity * factor
         elif duct_type == 'dm':
             area = (w1 * h1) / 1000000 * quantity
         elif duct_type == 'offset':
-            area = (w1 + h1 + w2 + h2) / 1000 * ((length + degree) / 1000) * quantity * factor
+            area = ((w1 + h1 + w2 + h2) / 2 / 1000) * (length / 1000) * quantity * factor
         elif duct_type == 'shoe':
-            area = ((w1 + h1) * 2) / 1000 * (length / 1000) * quantity * factor
+            area = (w1 + h1) / 1000 * (length / 1000) * quantity * factor
         elif duct_type == 'vanes':
-            area = (w1 / 1000) * (2 * math.pi * (w1 / 1000) / 4) * quantity
+            area = (w1 / 1000) * (h1 / 1000) * quantity
         elif duct_type == 'elb':
-            area = 2 * (w1 + h1) / 1000 * ((h1 / 2) / 1000 + (length / 1000) * math.pi * (degree / 180)) * quantity * factor
+            area = 2 * ((w1 + h1) / 1000) * ((length * degree / 360) / 1000) * quantity * factor
 
-        # Gauge decision (for demo purpose - auto assign based on W1)
+        # Gauge logic (optional default logic, feel free to modify)
         gauge = '24G'
         if w1 > 1000:
             gauge = '22G'
@@ -324,25 +325,31 @@ def add_measurement_sheet():
         if w1 > 2000:
             gauge = '18G'
 
-        # Accessory calculations
+        # Accessory logic (exactly from your formula sheet)
+        cleat_24g = 12 * quantity if gauge == '24G' else 0
+        cleat_22g = 10 * quantity if gauge == '22G' else 0
+        cleat_20g = 8 * quantity if gauge == '20G' else 0
+        cleat_18g = 4 * quantity if gauge == '18G' else 0
         gasket = (w1 + w2 + h1 + h2) * quantity / 1000
-        cleat_24g = quantity * 12 if gauge == '24G' else 0
-        cleat_22g = quantity * 10 if gauge == '22G' else 0
-        cleat_20g = quantity * 8 if gauge == '20G' else 0
-        cleat_18g = quantity * 4 if gauge == '18G' else 0
         corner_pieces = 8 if duct_type == 'dm' else 0
 
+        # Insert into correct table: measurement_sheets
         c.execute('''
-            INSERT INTO measurement_entries 
-            (duct_no, duct_type, w1, h1, w2, h2, length, degree, quantity, factor, area, gauge, cleat_24g, cleat_22g, cleat_20g, cleat_18g, cleat, gasket, corner_pieces)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-            (duct_no, duct_type, w1, h1, w2, h2, length, degree, quantity, factor, area, gauge, cleat_24g, cleat_22g, cleat_20g, cleat_18g, 0, gasket, corner_pieces)
-        )
+            INSERT INTO measurement_sheets 
+            (duct_no, duct_type, w1, h1, w2, h2, length, degree, quantity, factor, area, gauge, 
+             cleat_24g, cleat_22g, cleat_20g, cleat_18g, cleat, gasket, corner_pieces)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            duct_no, duct_type, w1, h1, w2, h2, length, degree, quantity, factor, area, gauge,
+            cleat_24g, cleat_22g, cleat_20g, cleat_18g, 0, gasket, corner_pieces
+        ))
         conn.commit()
 
-    entries = c.execute('SELECT * FROM measurement_entries').fetchall()
+    # Use the correct table here as well
+    entries = c.execute('SELECT * FROM measurement_sheets').fetchall()
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     return render_template('measurement_sheet.html', entries=entries, timestamp=timestamp)
+
 
 # Delete route
 
