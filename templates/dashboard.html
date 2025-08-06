@@ -60,26 +60,26 @@
 
   <div class="sidebar">
     <h2>Enquiry</h2>
-    <a href="/new_project">New Project</a>
-    <a href="/enquiry_progress">Progress Table</a>
-    <a href="/enquiry_summary">Summary</a>
+    <a href="{{ url_for('new_project') }}">New Project</a>
+    <a href="{{ url_for('enquiry_progress_table') }}">Progress Table</a>
+    <a href="{{ url_for('enquiry_summary') }}">Summary</a>
 
     <h2>Production</h2>
-    <a href="/production_new_project">New Project</a>
-    <a href="/production_progress">Progress Table</a>
-    <a href="/production_summary">Summary</a>
-    <a href="/sheet_cutting">Sheet Cutting</a>
-    <a href="/fabrication">Fabrication</a>
-    <a href="/dispatch">Dispatch</a>
+    <a href="{{ url_for('production_new_project') }}">New Project</a>
+    <a href="{{ url_for('production_progress_table') }}">Progress Table</a>
+    <a href="{{ url_for('production_summary') }}">Summary</a>
+    <a href="{{ url_for('sheet_cutting') }}">Sheet Cutting</a>
+    <a href="{{ url_for('fabrication') }}">Fabrication</a>
+    <a href="{{ url_for('dispatch') }}">Dispatch</a>
 
     <h2>Reports</h2>
-    <a href="/daily_reports">Daily Reports</a>
-    <a href="/weekly_reports">Weekly Reports</a>
-    <a href="/monthly_reports">Monthly Reports</a>
+    <a href="{{ url_for('daily_reports') }}">Daily Reports</a>
+    <a href="{{ url_for('weekly_reports') }}">Weekly Reports</a>
+    <a href="{{ url_for('monthly_reports') }}">Monthly Reports</a>
 
     <h2>Registration</h2>
-    <a href="/employee_registration">Employee Registration</a>
-    <a href="/vendor_registration">Vendor Registration</a>
+    <a href="{{ url_for('employee_registration') }}">Employee Registration</a>
+    <a href="{{ url_for('vendor_registration') }}">Vendor Registration</a>
   </div>
 
   <div class="main-content">
