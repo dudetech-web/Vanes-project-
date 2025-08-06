@@ -1,4 +1,5 @@
-<!DOCTYPE html><html>
+<!DOCTYPE html>
+<html>
 <head>
     <title>Add Measurement Sheet</title>
     <style>
@@ -10,95 +11,140 @@
         th, td { padding: 8px; text-align: center; }
         button { margin: 5px; padding: 6px 12px; }
         .signature-section { margin-top: 30px; }
+        input.inline-edit { width: 60px; }
     </style>
+    <script>
+        function confirmDelete(id) {
+            if (confirm('Are you sure you want to delete this entry?')) {
+                window.location.href = '/delete_entry/' + id;
+            }
+        }
+
+        function editRow(rowId) {
+            const row = document.getElementById(rowId);
+            const cells = row.querySelectorAll('td[data-editable]');
+            cells.forEach(cell => {
+                const val = cell.innerText;
+                cell.innerHTML = `<input class="inline-edit" value="${val}" />`;
+            });
+
+            const actionCell = row.querySelector('.action-cell');
+            actionCell.innerHTML = `<button onclick="saveRow('${rowId}')">Save</button>`;
+        }
+
+        function saveRow(rowId) {
+            const row = document.getElementById(rowId);
+            const inputs = row.querySelectorAll('input.inline-edit');
+            const updated = Array.from(inputs).map(input => input.value);
+            alert("Saving: " + updated.join(", "));
+            // You can replace the alert with a fetch() POST call to update on the server
+        }
+    </script>
 </head>
-<body><h2>Add Measurement Sheet</h2>
-<div class="container">
-    <div class="left-panel">
-        <label>AutoCAD Image Preview:</label><br>
-        <img src="/static/sample.png" alt="AutoCAD Preview" width="100%"><br><br><label>Upload Tag File:</label>
-    <input type="file"><br><br>
+<body>
+    <h2>Add Measurement Sheet</h2>
+    <div class="container">
+        <div class="left-panel">
+            <label>AutoCAD Image Preview:</label><br>
+            <img src="/static/sample.png" alt="AutoCAD Preview" width="100%"><br><br>
+            <label>Upload Tag File:</label>
+            <input type="file"><br><br>
+            <label>Upload Revised Tag File:</label>
+            <input type="file">
+        </div>
 
-    <label>Upload Revised Tag File:</label>
-    <input type="file">
-</div>
+        <div class="right-panel">
+            <form method="POST" action="/add_measurement_sheet">
+                <label>Duct No:</label><input type="text" name="duct_no"><br>
+                <label>Duct Type:</label>
+                <select name="duct_type">
+                    <option value="st">ST</option>
+                    <option value="elb">ELB</option>
+                    <option value="red">RED</option>
+                    <option value="dm">DM</option>
+                    <option value="offset">OFFSET</option>
+                    <option value="shoe">SHOE</option>
+                    <option value="vanes">VANES</option>
+                </select><br>
+                <label>W1:</label><input type="number" name="w1"><br>
+                <label>H1:</label><input type="number" name="h1"><br>
+                <label>W2:</label><input type="number" name="w2"><br>
+                <label>H2:</label><input type="number" name="h2"><br>
+                <label>Length/Radius:</label><input type="number" name="length"><br>
+                <label>Degree/Offset:</label><input type="number" name="degree"><br>
+                <label>Quantity:</label><input type="number" name="quantity"><br>
+                <label>Factor (if applicable):</label><input type="number" step="0.01" name="factor"><br>
+                <button type="submit">Add Entry</button>
+            </form>
+        </div>
+    </div>
 
-<div class="right-panel">
-    <form method="POST" action="/add_measurement_sheet">
-        <label>Duct No:</label>
-        <input type="text" name="duct_no"><br>
-        
-        <label>Duct Type:</label>
-        <select name="duct_type">
-            <option value="st">ST</option>
-            <option value="elb">ELB</option>
-            <option value="red">RED</option>
-            <option value="dm">DM</option>
-            <option value="offset">OFFSET</option>
-            <option value="shoe">SHOE</option>
-            <option value="vanes">VANES</option>
-        </select><br>
+    <hr>
+    <h3>Live Table</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Duct No</th><th>Duct Type</th><th>W1</th><th>H1</th><th>W2</th><th>H2</th>
+                <th>Length/Radius</th><th>Degree/Offset</th><th>Quantity</th><th>Area</th><th>Gauge</th>
+                <th>24G</th><th>22G</th><th>20G</th><th>18G</th><th>Cleat</th><th>Gasket</th>
+                <th>Corner Pieces</th><th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in entries %}
+            <tr id="row-{{ entry.id }}">
+                <td data-editable>{{ entry.duct_no }}</td>
+                <td data-editable>{{ entry.duct_type }}</td>
+                <td data-editable>{{ entry.w1 }}</td>
+                <td data-editable>{{ entry.h1 }}</td>
+                <td data-editable>{{ entry.w2 }}</td>
+                <td data-editable>{{ entry.h2 }}</td>
+                <td data-editable>{{ entry.length }}</td>
+                <td data-editable>{{ entry.degree }}</td>
+                <td data-editable>{{ entry.quantity }}</td>
+                <td data-editable>{{ entry.area }}</td>
+                <td data-editable>{{ entry.gauge }}</td>
+                <td data-editable>{{ entry.g24 }}</td>
+                <td data-editable>{{ entry.g22 }}</td>
+                <td data-editable>{{ entry.g20 }}</td>
+                <td data-editable>{{ entry.g18 }}</td>
+                <td data-editable>{{ entry.cleat }}</td>
+                <td data-editable>{{ entry.gasket }}</td>
+                <td data-editable>{{ entry.corner_pieces }}</td>
+                <td class="action-cell">
+                    <button onclick="editRow('row-{{ entry.id }}')">Edit</button>
+                    <button onclick="confirmDelete('{{ entry.id }}')">Delete</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 
-        <label>W1:</label><input type="number" name="w1"><br>
-        <label>H1:</label><input type="number" name="h1"><br>
-        <label>W2:</label><input type="number" name="w2"><br>
-        <label>H2:</label><input type="number" name="h2"><br>
-        <label>Length/Radius:</label><input type="number" name="length"><br>
-        <label>Offset/Degree:</label><input type="number" name="degree"><br>
-        <label>Quantity:</label><input type="number" name="quantity"><br>
-        <label>Factor (if applicable):</label><input type="number" step="0.01" name="factor"><br>
-        <button type="submit">Add Entry</button>
-    </form>
-</div>
+    <div class="signature-section">
+        <p><strong>Prepared By:</strong> Design Engineer – {{ timestamp }}</p>
+        <p><strong>Checked By:</strong> Project Manager – {{ timestamp }}</p>
+        <p><strong>Approved By:</strong> Managing Director – {{ timestamp }}</p>
+    </div>
 
-</div><hr><h3>Live Table</h3>
-<table>
-    <thead>
-        <tr>
-            <th>Duct No</th><th>Type</th><th>W1</th><th>H1</th><th>W2</th><th>H2</th>
-            <th>Length</th><th>Degree</th><th>Qty</th><th>Factor</th>
-            <th>Area (m²)</th><th>Gauge</th><th>Action</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for entry in entries %}
-        <tr>
-            <td>{{ entry.duct_no }}</td><td>{{ entry.duct_type }}</td>
-            <td>{{ entry.w1 }}</td><td>{{ entry.h1 }}</td>
-            <td>{{ entry.w2 }}</td><td>{{ entry.h2 }}</td>
-            <td>{{ entry.length }}</td><td>{{ entry.degree }}</td>
-            <td>{{ entry.quantity }}</td><td>{{ entry.factor }}</td>
-            <td>{{ entry.area }}</td><td>{{ entry.gauge }}</td>
-            <td>
-                <button onclick="editEntry('{{ entry.id }}')">Edit</button>
-                <button onclick="confirmDelete('{{ entry.id }}')">Delete</button>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table><div class="signature-section">
-    <p><strong>Prepared By:</strong> Design Engineer – {{ timestamp }}</p>
-    <p><strong>Checked By:</strong> Project Manager – {{ timestamp }}</p>
-    <p><strong>Approved By:</strong> Managing Director – {{ timestamp }}</p>
-</div><div style="margin-top: 20px;">
-    <button onclick="exportToExcel()">Export to Excel</button>
-    <button onclick="exportToPDF()">Export to PDF</button>
-    <button onclick="window.print()">Print</button>
-    <button onclick="submitMeasurementSheet()">Submit</button>
-</div><script>
-function confirmDelete(id) {
-    if (confirm('Are you sure you want to delete this entry?')) {
-        window.location.href = '/delete_entry/' + id;
-    }
-}
-function exportToExcel() {
-    window.location.href = "/export_excel";
-}
-function exportToPDF() {
-    window.location.href = "/export_pdf";
-}
-function submitMeasurementSheet() {
-    alert("Measurement Sheet submitted successfully.");
-}
-</script></body>
+    <div style="margin-top: 20px;">
+        <button onclick="exportToExcel()">Export to Excel</button>
+        <button onclick="exportToPDF()">Export to PDF</button>
+        <button onclick="window.print()">Print</button>
+        <button onclick="submitMeasurementSheet()">Submit</button>
+    </div>
+
+    <script>
+        function exportToExcel() {
+            window.location.href = "/export_excel";
+        }
+
+        function exportToPDF() {
+            window.location.href = "/export_pdf";
+        }
+
+        function submitMeasurementSheet() {
+            alert("Measurement Sheet submitted successfully.");
+        }
+    </script>
+</body>
 </html>
