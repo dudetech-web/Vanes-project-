@@ -1,100 +1,151 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from werkzeug.utils import secure_filename
-import os, hashlib, psycopg2, math, datetime
+import psycopg2
+import hashlib
+import datetime
+import math
+import os
 
 app = Flask(__name__)
 app.secret_key = 'secret_key'
 
-# --- PostgreSQL DB config ---
-DATABASE_URL = "postgresql://duct_vendor_app_user:6F8CX3mCEBU8E4azRCf0s6gdQeWaL9bq@dpg-d243r9qli9vc73ca99ag-a.singapore-postgres.render.com/duct_vendor_app"
+# PostgreSQL DB connection
+DATABASE_URL = 'postgresql://duct_vendor_app_user:6F8CX3mCEBU8E4azRCf0s6gdQeWaL9bq@dpg-d243r9qli9vc73ca99ag-a.singapore-postgres.render.com/duct_vendor_app'
 
-# --- DB Connection ---
 def get_db():
-    return psycopg2.connect(DATABASE_URL, sslmode='require')
+    return psycopg2.connect(DATABASE_URL)
 
-# --- Admin & Vendor Setup ---
+# --- INIT TABLES ---
 def init_db():
     conn = get_db()
     cur = conn.cursor()
 
-    cur.execute('''CREATE TABLE IF NOT EXISTS admin (
-        id SERIAL PRIMARY KEY,
-        username TEXT UNIQUE,
-        password TEXT)''')
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS admin (
+            id SERIAL PRIMARY KEY,
+            username TEXT UNIQUE,
+            password TEXT
+        )
+    ''')
 
-    cur.execute('''CREATE TABLE IF NOT EXISTS vendors (
-        id SERIAL PRIMARY KEY,
-        vendor_name TEXT, gst TEXT, pan TEXT,
-        bank_name TEXT, branch TEXT,
-        account_no TEXT, ifsc TEXT,
-        address TEXT)''')
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS vendors (
+            id SERIAL PRIMARY KEY,
+            vendor_name TEXT UNIQUE,
+            gst TEXT, pan TEXT,
+            bank_name TEXT, branch TEXT,
+            account_no TEXT, ifsc TEXT,
+            address TEXT
+        )
+    ''')
 
-    cur.execute('''CREATE TABLE IF NOT EXISTS projects (
-        id SERIAL PRIMARY KEY,
-        enquiry_id TEXT, vendor_name TEXT,
-        quotation TEXT, gst TEXT, start_date TEXT,
-        address TEXT, end_date TEXT, email TEXT,
-        project_location TEXT, contact_number TEXT,
-        project_incharge TEXT, notes TEXT, drawing TEXT,
-        drawing_filename TEXT)''')
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS projects (
+            id SERIAL PRIMARY KEY,
+            enquiry_id TEXT,
+            vendor_name TEXT,
+            quotation TEXT,
+            gst TEXT,
+            start_date TEXT,
+            address TEXT,
+            end_date TEXT,
+            email TEXT,
+            project_location TEXT,
+            contact_number TEXT,
+            project_incharge TEXT,
+            notes TEXT,
+            drawing TEXT,
+            drawing_filename TEXT
+        )
+    ''')
 
-    cur.execute('''CREATE TABLE IF NOT EXISTS measurement_sheets (
-        id SERIAL PRIMARY KEY,
-        duct_no TEXT, duct_type TEXT,
-        w1 FLOAT, h1 FLOAT, w2 FLOAT, h2 FLOAT,
-        length_radius FLOAT, degree_offset FLOAT,
-        quantity INT, gauge TEXT,
-        area FLOAT, g24 FLOAT, g22 FLOAT, g20 FLOAT, g18 FLOAT,
-        cleat FLOAT, gasket FLOAT, corner_pieces INT,
-        project_id INT)''')
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS measurement_sheets (
+            id SERIAL PRIMARY KEY,
+            duct_no TEXT,
+            duct_type TEXT,
+            w1 REAL,
+            h1 REAL,
+            w2 REAL,
+            h2 REAL,
+            length_radius REAL,
+            degree_offset REAL,
+            quantity INTEGER,
+            gauge TEXT,
+            area REAL,
+            g24 REAL,
+            g22 REAL,
+            g20 REAL,
+            g18 REAL,
+            cleat REAL,
+            gasket REAL,
+            corner_pieces INTEGER,
+            project_id INTEGER REFERENCES projects(id)
+        )
+    ''')
 
     conn.commit()
     cur.close()
     conn.close()
 
-def insert_admin():
+# --- CREATE DEFAULT ADMIN USER ---
+@app.route('/create_admin')
+def create_admin():
     conn = get_db()
     cur = conn.cursor()
-    hashed = hashlib.sha256('demo123'.encode()).hexdigest()
-    cur.execute("INSERT INTO admin (username, password) VALUES (%s, %s) ON CONFLICT (username) DO NOTHING", ('demo', hashed))
+
+    username = 'admin'
+    password = hashlib.sha256('admin123'.encode()).hexdigest()
+
+    cur.execute("SELECT * FROM admin WHERE username=%s", (username,))
+    if not cur.fetchone():
+        cur.execute("INSERT INTO admin (username, password) VALUES (%s, %s)", (username, password))
+
     conn.commit()
     cur.close()
     conn.close()
+    return 'Admin created successfully'
 
+
+# --- INSERT DUMMY VENDORS ---
 def insert_dummy_vendors():
-    vendors = [
-        ('Alpha Tech', '27AAQCS1234L1Z9', 'AAQCS1234L', 'ICICI', 'Chennai', '1234567890', 'ICIC0001234', 'Chennai, TN'),
-        ('Beta Solutions', '29AABCU6789R1Z1', 'AABCU6789R', 'HDFC', 'Bangalore', '9876543210', 'HDFC0005678', 'Bangalore, KA'),
-        ('Gamma Engineers', '33AAACG0001L1Z2', 'AAACG0001L', 'SBI', 'Coimbatore', '1122334455', 'SBIN0001111', 'Coimbatore, TN')
-    ]
     conn = get_db()
     cur = conn.cursor()
-    for v in vendors:
-        cur.execute("""INSERT INTO vendors 
+
+    dummy_vendors = [
+        ('Vendor A', 'GST123', 'PAN123', 'Bank A', 'Branch A', '1234567890', 'IFSC001', 'Address A'),
+        ('Vendor B', 'GST456', 'PAN456', 'Bank B', 'Branch B', '2345678901', 'IFSC002', 'Address B'),
+        ('Vendor C', 'GST789', 'PAN789', 'Bank C', 'Branch C', '3456789012', 'IFSC003', 'Address C')
+    ]
+
+    for v in dummy_vendors:
+        cur.execute("""
+            INSERT INTO vendors 
             (vendor_name, gst, pan, bank_name, branch, account_no, ifsc, address)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT (vendor_name) DO NOTHING""", v)
+            ON CONFLICT (vendor_name) DO NOTHING
+        """, v)
+
     conn.commit()
     cur.close()
     conn.close()
 
-# --- Init on startup ---
-init_db()
-insert_admin()
+# --- CALL DUMMY INSERT ON STARTUP ---
 insert_dummy_vendors()
+init_db()
 
 
-
-# --- LOGIN ---
+# --- LOGIN PAGE ---
 @app.route('/', methods=['GET', 'POST'])
 def login():
+    error = None
     if request.method == 'POST':
         username = request.form['username']
         password = hashlib.sha256(request.form['password'].encode()).hexdigest()
 
         conn = get_db()
         cur = conn.cursor()
-        cur.execute("SELECT * FROM admin WHERE username = %s AND password = %s", (username, password))
+        cur.execute("SELECT * FROM admin WHERE username=%s AND password=%s", (username, password))
         user = cur.fetchone()
         cur.close()
         conn.close()
@@ -103,8 +154,10 @@ def login():
             session['user'] = username
             return redirect(url_for('dashboard'))
         else:
-            return render_template('login.html', error="Invalid credentials")
-    return render_template('login.html')
+            error = 'Invalid credentials'
+
+    return render_template('login.html', error=error)
+
 
 # --- LOGOUT ---
 @app.route('/logout')
@@ -112,19 +165,22 @@ def logout():
     session.pop('user', None)
     return redirect(url_for('login'))
 
-# --- DASHBOARD ---
+
+# --- DASHBOARD PAGE ---
 @app.route('/dashboard')
 def dashboard():
     if 'user' not in session:
         return redirect(url_for('login'))
     return render_template('dashboard.html')
 
-# --- VENDOR REGISTRATION ---
+
+# --- VENDOR REGISTRATION PAGE ---
 @app.route('/vendor_registration', methods=['GET', 'POST'])
 def vendor_registration():
     if 'user' not in session:
         return redirect(url_for('login'))
 
+    message = ''
     if request.method == 'POST':
         data = (
             request.form['vendor_name'],
@@ -136,17 +192,26 @@ def vendor_registration():
             request.form['ifsc'],
             request.form['address']
         )
+
         conn = get_db()
         cur = conn.cursor()
-        cur.execute("""INSERT INTO vendors 
-            (vendor_name, gst, pan, bank_name, branch, account_no, ifsc, address) 
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""", data)
-        conn.commit()
-        cur.close()
-        conn.close()
-        return render_template('vendor_registration.html', success="Vendor added successfully")
+        try:
+            cur.execute("""
+                INSERT INTO vendors 
+                (vendor_name, gst, pan, bank_name, branch, account_no, ifsc, address)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """, data)
+            conn.commit()
+            message = 'Vendor registered successfully!'
+        except Exception as e:
+            conn.rollback()
+            message = 'Error: Vendor might already exist.'
+        finally:
+            cur.close()
+            conn.close()
 
-    return render_template('vendor_registration.html')
+    return render_template('vendor_registration.html', message=message)
+
 
 # --- NEW PROJECT PAGE ---
 @app.route('/new_project', methods=['GET', 'POST'])
@@ -157,208 +222,259 @@ def new_project():
     conn = get_db()
     cur = conn.cursor()
     cur.execute("SELECT vendor_name FROM vendors")
-    vendors = cur.fetchall()
+    vendors = [row[0] for row in cur.fetchall()]
 
+    message = ''
     if request.method == 'POST':
-        file = request.files['drawing']
-        filename = secure_filename(file.filename)
-        filepath = os.path.join('static', filename)
-        file.save(filepath)
-
-        form_data = (
-            request.form['enquiry_id'],
-            request.form['vendor_name'],
-            request.form['quotation'],
-            request.form['gst'],
-            request.form['start_date'],
-            request.form['address'],
-            request.form['end_date'],
-            request.form['email'],
-            request.form['project_location'],
-            request.form['contact_number'],
-            request.form['project_incharge'],
-            request.form['notes'],
-            filename,
-            filename
+        data = (
+            request.form['project_name'],
+            request.form['main_client'],
+            request.form['end_client'],
+            request.form['vendor'],
+            request.form['date']
         )
-
-        cur.execute("""INSERT INTO projects 
-            (enquiry_id, vendor_name, quotation, gst, start_date, address,
-            end_date, email, project_location, contact_number, project_incharge, notes, drawing, drawing_filename)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", form_data)
-
+        cur.execute("""
+            INSERT INTO projects 
+            (project_name, main_client, end_client, vendor, date)
+            VALUES (%s, %s, %s, %s, %s)
+        """, data)
         conn.commit()
-        cur.close()
-        conn.close()
-        return render_template('new_project.html', vendors=vendors, success="Project added successfully")
+        message = 'Project created successfully!'
 
     cur.close()
     conn.close()
-    return render_template('new_project.html', vendors=vendors)
+    return render_template('new_project.html', vendors=vendors, message=message)
 
-
-# --- ENQUIRY SUMMARY PAGE ---
-@app.route('/enquiry_summary')
-def enquiry_summary():
-    if 'user' not in session:
-        return redirect(url_for('login'))
-
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM projects")
-    projects = cur.fetchall()
-    cur.close()
-    conn.close()
-    return render_template('enquiry_summary.html', projects=projects)
 
 # --- ADD MEASUREMENT SHEET PAGE ---
-@app.route('/add_measurement_sheet')
+@app.route('/add_measurement_sheet', methods=['GET', 'POST'])
 def add_measurement_sheet():
     if 'user' not in session:
         return redirect(url_for('login'))
 
     project_id = request.args.get('project_id')
-    if not project_id:
-        return redirect(url_for('enquiry_summary'))
+    conn = get_db()
+    cur = conn.cursor()
+
+    if request.method == 'POST':
+        data = request.get_json()
+        duct_type = data.get('duct_type', '').upper()
+        w1 = float(data.get('w1', 0))
+        h1 = float(data.get('h1', 0))
+        w2 = float(data.get('w2', 0))
+        h2 = float(data.get('h2', 0))
+        length = float(data.get('length', 0))
+        degree = float(data.get('degree', 0))
+        quantity = int(data.get('quantity', 1))
+        gauge = data.get('gauge', '')
+
+        # Area Calculation
+        area = 0
+        if duct_type == "ST":
+            area = ((w1 + h1) * 2) * length * quantity / 144
+        elif duct_type == "RED":
+            area = (((w1 + w2) / 2) + h1) * 2 * length * quantity / 144
+        elif duct_type == "DM":
+            area = (w1 * h1) * quantity / 144
+        elif duct_type == "OFFSET":
+            area = ((w1 + h1) * 2) * length * quantity / 144
+        elif duct_type == "SHOE":
+            area = (w1 * h1) * quantity / 144
+        elif duct_type == "VANES":
+            area = (w1 * h1) * quantity / 144
+        elif duct_type == "ELB":
+            area = ((w1 + h1) * 3.14 * degree / 90) * quantity / 144
+
+        area = round(area, 2)
+
+        # Accessory calculations
+        g24 = g22 = g20 = g18 = 0
+        if gauge == "24G":
+            g24 = area
+        elif gauge == "22G":
+            g22 = area
+        elif gauge == "20G":
+            g20 = area
+        elif gauge == "18G":
+            g18 = area
+
+        cleat = round(area * 3.5, 2)
+        gasket = round(area * 1.2, 2)
+        corner_pieces = 0 if duct_type == "DM" else 8
+
+        cur.execute("""
+            INSERT INTO measurement_sheets (
+                project_id, duct_no, duct_type, w1, h1, w2, h2, length, degree,
+                quantity, area, gauge, g24, g22, g20, g18,
+                cleat, gasket, corner_pieces
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            project_id, data['duct_no'], duct_type, w1, h1, w2, h2, length, degree,
+            quantity, area, gauge, g24, g22, g20, g18,
+            cleat, gasket, corner_pieces
+        ))
+        conn.commit()
+        return jsonify({'status': 'success', 'message': 'Data saved successfully!'})
+
+    # GET Request: Fetch project details + existing sheet data
+    cur.execute("SELECT project_name FROM projects WHERE id = %s", (project_id,))
+    project_name = cur.fetchone()[0] if cur.rowcount else 'Unknown Project'
+
+    cur.execute("SELECT * FROM measurement_sheets WHERE project_id = %s", (project_id,))
+    sheets = cur.fetchall()
+    columns = [desc[0] for desc in cur.description]
+    cur.close()
+    conn.close()
+
+    return render_template('add_measurement_sheet.html', project_name=project_name, project_id=project_id, sheets=sheets, columns=columns)
+
+
+# --- EDIT MEASUREMENT SHEET ROW ---
+@app.route('/edit_measurement_row/<int:row_id>', methods=['POST'])
+def edit_measurement_row(row_id):
+    if 'user' not in session:
+        return redirect(url_for('login'))
+
+    data = request.get_json()
+    duct_no = data.get('duct_no')
+    duct_type = data.get('duct_type')
+    w1 = float(data.get('w1', 0))
+    h1 = float(data.get('h1', 0))
+    w2 = float(data.get('w2', 0))
+    h2 = float(data.get('h2', 0))
+    length = float(data.get('length', 0))
+    degree = float(data.get('degree', 0))
+    quantity = int(data.get('quantity', 1))
+    gauge = data.get('gauge')
+
+    # Recalculate area and accessories
+    area = 0
+    if duct_type == "ST":
+        area = ((w1 + h1) * 2) * length * quantity / 144
+    elif duct_type == "RED":
+        area = (((w1 + w2) / 2) + h1) * 2 * length * quantity / 144
+    elif duct_type == "DM":
+        area = (w1 * h1) * quantity / 144
+    elif duct_type == "OFFSET":
+        area = ((w1 + h1) * 2) * length * quantity / 144
+    elif duct_type == "SHOE":
+        area = (w1 * h1) * quantity / 144
+    elif duct_type == "VANES":
+        area = (w1 * h1) * quantity / 144
+    elif duct_type == "ELB":
+        area = ((w1 + h1) * 3.14 * degree / 90) * quantity / 144
+
+    area = round(area, 2)
+
+    g24 = g22 = g20 = g18 = 0
+    if gauge == "24G":
+        g24 = area
+    elif gauge == "22G":
+        g22 = area
+    elif gauge == "20G":
+        g20 = area
+    elif gauge == "18G":
+        g18 = area
+
+    cleat = round(area * 3.5, 2)
+    gasket = round(area * 1.2, 2)
+    corner_pieces = 0 if duct_type == "DM" else 8
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE measurement_sheets
+        SET duct_no=%s, duct_type=%s, w1=%s, h1=%s, w2=%s, h2=%s, length=%s, degree=%s,
+            quantity=%s, area=%s, gauge=%s, g24=%s, g22=%s, g20=%s, g18=%s,
+            cleat=%s, gasket=%s, corner_pieces=%s
+        WHERE id=%s
+    """, (
+        duct_no, duct_type, w1, h1, w2, h2, length, degree,
+        quantity, area, gauge, g24, g22, g20, g18,
+        cleat, gasket, corner_pieces, row_id
+    ))
+    conn.commit()
+    conn.close()
+    return jsonify({'status': 'success'})
+
+
+# --- DELETE MEASUREMENT ROW ---
+@app.route('/delete_measurement_row/<int:row_id>', methods=['POST'])
+def delete_measurement_row(row_id):
+    if 'user' not in session:
+        return redirect(url_for('login'))
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM measurement_sheets WHERE id = %s", (row_id,))
+    conn.commit()
+    conn.close()
+    return jsonify({'status': 'deleted'})
+
+
+# --- EXPORT TO EXCEL ---
+@app.route('/export_measurement_sheet/<int:project_id>')
+def export_measurement_sheet(project_id):
+    if 'user' not in session:
+        return redirect(url_for('login'))
 
     conn = get_db()
     cur = conn.cursor()
     cur.execute("SELECT * FROM measurement_sheets WHERE project_id = %s", (project_id,))
-    items = cur.fetchall()
-    cur.close()
-    conn.close()
-    return render_template('add_measurement_sheet.html', items=items, project_id=project_id)
-
-# --- ADD ENTRY TO MEASUREMENT SHEET TABLE ---
-@app.route('/add_measurement_entry', methods=['POST'])
-def add_measurement_entry():
-    data = request.get_json()
-    project_id = data['project_id']
-    duct_no = data['duct_no']
-    duct_type = data['duct_type']
-    w1 = float(data['w1'] or 0)
-    h1 = float(data['h1'] or 0)
-    w2 = float(data['w2'] or 0)
-    h2 = float(data['h2'] or 0)
-    length_radius = float(data['length_radius'] or 0)
-    degree_offset = float(data['degree_offset'] or 0)
-    quantity = int(data['quantity'] or 1)
-    gauge = data['gauge']
-
-    # Area Calculation Based on Duct Type
-    if duct_type == 'ST':
-        area = 2 * ((w1 + h1) * length_radius) / 144
-    elif duct_type == 'RED':
-        area = 2 * ((w1 + h1 + w2 + h2) / 2) * length_radius / 144
-    elif duct_type == 'DM':
-        area = (w1 * h1) / 144
-    elif duct_type == 'OFFSET':
-        area = ((w1 + h1) * length_radius * 1.5) / 144
-    elif duct_type == 'SHOE':
-        area = ((w1 + h1) * length_radius * 1.25) / 144
-    elif duct_type == 'VANES':
-        area = (w1 * h1) / 144
-    elif duct_type == 'ELB':
-        area = 2 * ((w1 + h1) * degree_offset * 3.14 / 180 * length_radius) / 144
-    else:
-        area = 0
-
-    area = round(area * quantity, 2)
-
-    # Gauge values
-    g24 = area if gauge == '24G' else 0
-    g22 = area if gauge == '22G' else 0
-    g20 = area if gauge == '20G' else 0
-    g18 = area if gauge == '18G' else 0
-
-    # Cleat per gauge
-    cleat = 0
-    if gauge == '24G':
-        cleat = 0.75 * area
-    elif gauge == '22G':
-        cleat = 1.25 * area
-    elif gauge == '20G':
-        cleat = 1.75 * area
-    elif gauge == '18G':
-        cleat = 2.5 * area
-
-    cleat = round(cleat, 2)
-
-    # Accessories
-    gasket = round(0.5 * area, 2)
-    corner_pieces = 8 if duct_type != 'DM' else 0
-
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute('''INSERT INTO measurement_sheets 
-        (duct_no, duct_type, w1, h1, w2, h2, length_radius, degree_offset, quantity, gauge, area, 
-         g24, g22, g20, g18, cleat, gasket, corner_pieces, project_id)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
-        (duct_no, duct_type, w1, h1, w2, h2, length_radius, degree_offset, quantity, gauge, area,
-         g24, g22, g20, g18, cleat, gasket, corner_pieces, project_id))
-
-    conn.commit()
-    cur.close()
-    conn.close()
-    return jsonify(success=True)
-
-
-
-# --- DELETE ENTRY FROM MEASUREMENT SHEET ---
-@app.route('/delete_measurement/<int:id>', methods=['POST'])
-def delete_measurement(id):
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute("DELETE FROM measurement_sheets WHERE id = %s", (id,))
-    conn.commit()
-    cur.close()
-    conn.close()
-    return jsonify(success=True)
-
-# --- EDIT ENTRY (RETURN DATA FOR MODAL OR INLINE EDIT) ---
-@app.route('/get_measurement/<int:id>', methods=['GET'])
-def get_measurement(id):
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM measurement_sheets WHERE id = %s", (id,))
-    row = cur.fetchone()
+    rows = cur.fetchall()
+    headers = [desc[0] for desc in cur.description]
     cur.close()
     conn.close()
 
-    if row:
-        keys = ['id', 'duct_no', 'duct_type', 'w1', 'h1', 'w2', 'h2', 'length_radius', 'degree_offset', 'quantity', 'gauge',
-                'area', 'g24', 'g22', 'g20', 'g18', 'cleat', 'gasket', 'corner_pieces', 'project_id']
-        return jsonify(dict(zip(keys, row)))
-    return jsonify(success=False)
+    from io import BytesIO
+    output = BytesIO()
+    workbook = xlsxwriter.Workbook(output, {'in_memory': True})
+    sheet = workbook.add_worksheet()
 
-# --- PRODUCTION NEW PROJECT PAGE ---
+    for col, header in enumerate(headers):
+        sheet.write(0, col, header)
+
+    for row_idx, row in enumerate(rows, start=1):
+        for col_idx, cell in enumerate(row):
+            sheet.write(row_idx, col_idx, cell)
+
+    workbook.close()
+    output.seek(0)
+
+    return send_file(output, download_name="measurement_sheet.xlsx", as_attachment=True)
+
+
+# --- OTHER PAGES ---
+@app.route('/enquiry_summary')
+def enquiry_summary():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    return render_template('enquiry_summary.html')
+
+@app.route('/enquiry_progress_table')
+def enquiry_progress_table():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    return render_template('enquiry_progress_table.html')
+
 @app.route('/production_new_project')
 def production_new_project():
     if 'user' not in session:
         return redirect(url_for('login'))
     return render_template('production_new_project.html')
 
-# --- PRODUCTION SUMMARY PAGE ---
 @app.route('/production_summary')
 def production_summary():
     if 'user' not in session:
         return redirect(url_for('login'))
     return render_template('production_summary.html')
 
-# --- PRODUCTION PROGRESS TABLE PAGE ---
 @app.route('/production_progress_table')
 def production_progress_table():
     if 'user' not in session:
         return redirect(url_for('login'))
     return render_template('production_progress_table.html')
 
-
-# --- ENQUIRY PROGRESS TABLE PAGE ---
-@app.route('/enquiry_progress_table')
-def enquiry_progress_table():
-    if 'user' not in session:
-        return redirect(url_for('login'))
-    return render_template('enquiry_progress_table.html')
 
 # --- DASHBOARD PAGE ---
 @app.route('/dashboard')
@@ -367,16 +483,17 @@ def dashboard():
         return redirect(url_for('login'))
     return render_template('dashboard.html')
 
-# --- PostgreSQL DATABASE CONNECTION ---
-import psycopg2
-from psycopg2.extras import RealDictCursor
 
-DATABASE_URL = 'postgresql://duct_vendor_app_user:6F8CX3mCEBU8E4azRCf0s6gdQeWaL9bq@dpg-d243r9qli9vc73ca99ag-a.singapore-postgres.render.com/duct_vendor_app'
+# --- LOGOUT ---
+@app.route('/logout')
+def logout():
+    session.pop('user', None)
+    return redirect(url_for('login'))
 
-def get_db():
-    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
-# --- RUNNING APP ---
+# --- APP RUN ---
 if __name__ == '__main__':
+    with app.app_context():
+        create_tables()
+        insert_dummy_vendors()
     app.run(debug=True)
-
