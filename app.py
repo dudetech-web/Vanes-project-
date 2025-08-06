@@ -1,79 +1,64 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from werkzeug.utils import secure_filename
-import sqlite3, os, hashlib
-import math
-import datetime
-
+import os, hashlib, psycopg2, math, datetime
 
 app = Flask(__name__)
 app.secret_key = 'secret_key'
-DB_NAME = 'database.db'
 
-# ✅ Helper function to get DB connection
+# --- PostgreSQL DB config ---
+DATABASE_URL = "postgresql://duct_vendor_app_user:6F8CX3mCEBU8E4azRCf0s6gdQeWaL9bq@dpg-d243r9qli9vc73ca99ag-a.singapore-postgres.render.com/duct_vendor_app"
+
+# --- DB Connection ---
 def get_db():
-    return sqlite3.connect(DB_NAME)
+    return psycopg2.connect(DATABASE_URL, sslmode='require')
 
+# --- Admin & Vendor Setup ---
 def init_db():
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
+    conn = get_db()
+    cur = conn.cursor()
 
-    # Admin table
-    c.execute('''CREATE TABLE IF NOT EXISTS admin (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+    cur.execute('''CREATE TABLE IF NOT EXISTS admin (
+        id SERIAL PRIMARY KEY,
         username TEXT UNIQUE,
         password TEXT)''')
 
-    # Vendors table
-    c.execute('''CREATE TABLE IF NOT EXISTS vendors (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+    cur.execute('''CREATE TABLE IF NOT EXISTS vendors (
+        id SERIAL PRIMARY KEY,
         vendor_name TEXT, gst TEXT, pan TEXT,
         bank_name TEXT, branch TEXT,
         account_no TEXT, ifsc TEXT,
         address TEXT)''')
 
-    # Projects table
-    c.execute('''CREATE TABLE IF NOT EXISTS projects (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+    cur.execute('''CREATE TABLE IF NOT EXISTS projects (
+        id SERIAL PRIMARY KEY,
         enquiry_id TEXT, vendor_name TEXT,
         quotation TEXT, gst TEXT, start_date TEXT,
         address TEXT, end_date TEXT, email TEXT,
         project_location TEXT, contact_number TEXT,
-        project_incharge TEXT, notes TEXT, drawing TEXT)''')
-    
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS measurement_sheets (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            duct_no TEXT,
-            duct_type TEXT,
-            w1 REAL,
-            h1 REAL,
-            w2 REAL,
-            h2 REAL,
-            length_radius REAL,
-            degree_offset REAL,
-            quantity INTEGER,
-            gauge TEXT,
-            area REAL,
-            g24 REAL,
-            g22 REAL,
-            g20 REAL,
-            g18 REAL,
-            cleat REAL,
-            gasket REAL,
-            corner_pieces INTEGER,
-            project_id INTEGER
-        )
-    ''')
+        project_incharge TEXT, notes TEXT, drawing TEXT,
+        drawing_filename TEXT)''')
+
+    cur.execute('''CREATE TABLE IF NOT EXISTS measurement_sheets (
+        id SERIAL PRIMARY KEY,
+        duct_no TEXT, duct_type TEXT,
+        w1 FLOAT, h1 FLOAT, w2 FLOAT, h2 FLOAT,
+        length_radius FLOAT, degree_offset FLOAT,
+        quantity INT, gauge TEXT,
+        area FLOAT, g24 FLOAT, g22 FLOAT, g20 FLOAT, g18 FLOAT,
+        cleat FLOAT, gasket FLOAT, corner_pieces INT,
+        project_id INT)''')
 
     conn.commit()
+    cur.close()
     conn.close()
 
-def insert_permanent_admin():
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
+def insert_admin():
+    conn = get_db()
+    cur = conn.cursor()
     hashed = hashlib.sha256('demo123'.encode()).hexdigest()
-    c.execute("INSERT OR IGNORE INTO admin (username, password) VALUES (?, ?)", ('demo', hashed))
+    cur.execute("INSERT INTO admin (username, password) VALUES (%s, %s) ON CONFLICT (username) DO NOTHING", ('demo', hashed))
     conn.commit()
+    cur.close()
     conn.close()
 
 def insert_dummy_vendors():
@@ -82,56 +67,50 @@ def insert_dummy_vendors():
         ('Beta Solutions', '29AABCU6789R1Z1', 'AABCU6789R', 'HDFC', 'Bangalore', '9876543210', 'HDFC0005678', 'Bangalore, KA'),
         ('Gamma Engineers', '33AAACG0001L1Z2', 'AAACG0001L', 'SBI', 'Coimbatore', '1122334455', 'SBIN0001111', 'Coimbatore, TN')
     ]
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
+    conn = get_db()
+    cur = conn.cursor()
     for v in vendors:
-        c.execute("INSERT OR IGNORE INTO vendors (vendor_name, gst, pan, bank_name, branch, account_no, ifsc, address) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", v)
+        cur.execute("""INSERT INTO vendors 
+            (vendor_name, gst, pan, bank_name, branch, account_no, ifsc, address)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (vendor_name) DO NOTHING""", v)
     conn.commit()
+    cur.close()
     conn.close()
 
-# Ensure 'drawing_filename' column exists in 'projects' table
-def ensure_columns():
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    try:
-        c.execute("ALTER TABLE projects ADD COLUMN drawing_filename TEXT")
-    except sqlite3.OperationalError:
-        pass  # Column already exists
-    conn.commit()
-    conn.close()
-
-# Initialization
+# --- Init on startup ---
 init_db()
-ensure_columns()
-insert_permanent_admin()
+insert_admin()
 insert_dummy_vendors()
 
 
-# --- LOGIN PAGE ---
+
+# --- LOGIN ---
 @app.route('/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        uname = request.form['username']
-        passwd = hashlib.sha256(request.form['password'].encode()).hexdigest()
-        conn = sqlite3.connect(DB_NAME)
-        c = conn.cursor()
-        c.execute("SELECT * FROM admin WHERE username = ? AND password = ?", (uname, passwd))
-        user = c.fetchone()
+        username = request.form['username']
+        password = hashlib.sha256(request.form['password'].encode()).hexdigest()
+
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM admin WHERE username = %s AND password = %s", (username, password))
+        user = cur.fetchone()
+        cur.close()
         conn.close()
+
         if user:
-            session['user'] = uname
+            session['user'] = username
             return redirect(url_for('dashboard'))
         else:
             return render_template('login.html', error="Invalid credentials")
     return render_template('login.html')
 
-
 # --- LOGOUT ---
 @app.route('/logout')
 def logout():
-    session.clear()
+    session.pop('user', None)
     return redirect(url_for('login'))
-
 
 # --- DASHBOARD ---
 @app.route('/dashboard')
@@ -140,70 +119,7 @@ def dashboard():
         return redirect(url_for('login'))
     return render_template('dashboard.html')
 
-
-
-@app.route('/fix_projects_table')
-def fix_projects_table():
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    try:
-        c.execute("ALTER TABLE projects ADD COLUMN drawing_filename TEXT")
-        msg = "drawing_filename column added successfully."
-    except sqlite3.OperationalError:
-        msg = "drawing_filename column already exists."
-    conn.commit()
-    conn.close()
-    return msg
-
-
-
-@app.route('/fix_schema')
-def fix_schema():
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-
-    columns_to_add = [
-        ('length', 'REAL'),
-        ('degree', 'REAL'),
-        ('factor', 'REAL'),
-        ('area', 'REAL'),
-        ('gauge', 'TEXT'),
-        ('cleat_24g', 'INTEGER'),
-        ('cleat_22g', 'INTEGER'),
-        ('cleat_20g', 'INTEGER'),
-        ('cleat_18g', 'INTEGER'),
-        ('cleat', 'INTEGER'),
-        ('gasket', 'REAL'),
-        ('corner_pieces', 'INTEGER')
-    ]
-
-    added_columns = []
-    for col_name, col_type in columns_to_add:
-        try:
-            c.execute(f'ALTER TABLE measurement_sheets ADD COLUMN {col_name} {col_type}')
-            added_columns.append(col_name)
-        except sqlite3.OperationalError:
-            pass  # Column already exists
-
-    conn.commit()
-    conn.close()
-
-    return f"Schema update complete. Columns added: {', '.join(added_columns) if added_columns else 'None'}"
-
-
-# --- EMPLOYEE REGISTRATION PAGE ---
-@app.route('/employee_registration', methods=['GET', 'POST'])
-def employee_registration():
-    if 'user' not in session:
-        return redirect(url_for('login'))
-    # Placeholder only: implement DB save logic if needed
-    if request.method == 'POST':
-        # Capture employee registration logic here
-        return redirect(url_for('dashboard'))
-    return render_template('employee_registration.html')
-
-
-# --- VENDOR REGISTRATION PAGE ---
+# --- VENDOR REGISTRATION ---
 @app.route('/vendor_registration', methods=['GET', 'POST'])
 def vendor_registration():
     if 'user' not in session:
@@ -212,276 +128,215 @@ def vendor_registration():
     if request.method == 'POST':
         data = (
             request.form['vendor_name'],
-            request.form['gst'], request.form['pan'],
-            request.form['bank_name'], request.form['branch'],
-            request.form['account_no'], request.form['ifsc'],
+            request.form['gst'],
+            request.form['pan'],
+            request.form['bank_name'],
+            request.form['branch'],
+            request.form['account_no'],
+            request.form['ifsc'],
             request.form['address']
         )
-        conn = sqlite3.connect(DB_NAME)
-        c = conn.cursor()
-        c.execute("INSERT INTO vendors (vendor_name, gst, pan, bank_name, branch, account_no, ifsc, address) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", data)
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("""INSERT INTO vendors 
+            (vendor_name, gst, pan, bank_name, branch, account_no, ifsc, address) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""", data)
         conn.commit()
+        cur.close()
         conn.close()
-        return redirect(url_for('vendor_registration'))
+        return render_template('vendor_registration.html', success="Vendor added successfully")
 
     return render_template('vendor_registration.html')
 
-
-
-# --- GET VENDOR INFO (Auto-fill GST and Address) ---
-@app.route('/get_vendor_info', methods=['POST'])
-def get_vendor_info():
-    from flask import jsonify  # Ensure this is imported at the top
-
-    vendor_name = request.form['vendor_name']
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute("SELECT gst, address FROM vendors WHERE vendor_name = ?", (vendor_name,))
-    vendor = c.fetchone()
-    conn.close()
-    if vendor:
-        return jsonify({'gst': vendor[0], 'address': vendor[1]})
-    return jsonify({'gst': '', 'address': ''})
-
-
-# --- NEW PROJECT PAGE --
-
-
-
-
-
+# --- NEW PROJECT PAGE ---
 @app.route('/new_project', methods=['GET', 'POST'])
 def new_project():
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-
-    if request.method == 'POST':  
-        enquiry_id = request.form['enquiry_id']  
-        vendor_name = request.form['vendor_name']  
-        quotation = request.form['quotation']  
-        gst = request.form['gst']  
-        start_date = request.form['start_date']  
-        address = request.form['address']  
-        end_date = request.form['end_date']  
-        email = request.form['email']  
-        project_location = request.form['project_location']  
-        contact_number = request.form['contact_number']  
-        project_incharge = request.form['project_incharge']  
-        notes = request.form['notes']  
-        drawing = request.files['drawing']  
-
-        drawing_filename = None  
-        if drawing:  
-            drawing_filename = drawing.filename  
-            os.makedirs('uploads', exist_ok=True)
-            drawing.save(os.path.join('uploads', drawing_filename))  
-
-        c.execute('''  
-            INSERT INTO projects (  
-                enquiry_id, vendor_name, quotation, gst, start_date, address,  
-                end_date, email, project_location, contact_number,  
-                project_incharge, notes, drawing_filename  
-            )  
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)  
-        ''', (  
-            enquiry_id, vendor_name, quotation, gst, start_date, address,  
-            end_date, email, project_location, contact_number,  
-            project_incharge, notes, drawing_filename  
-        ))  
-        conn.commit()  
-
-    # Fetch vendors (run this first)
-    c.execute("SELECT vendor_name FROM vendors")  
-    vendors = [{'vendor_name': row[0]} for row in c.fetchall()]  
-
-    # Now fetch projects (run the query again)
-    c.execute('SELECT * FROM projects')  
-    project_rows = c.fetchall()
-
-    # Convert each row to dictionary
-    projects = []
-    for row in project_rows:
-        projects.append({
-            'id': row[0],
-            'enquiry_id': row[1],
-            'vendor_name': row[2],
-            'quotation': row[3],
-            'gst': row[4],
-            'start_date': row[5],
-            'address': row[6],
-            'end_date': row[7],
-            'email': row[8],
-            'project_location': row[9],
-            'contact_number': row[10],
-            'project_incharge': row[11],
-            'notes': row[12],
-            'drawing_filename': row[13],
-        })
-
-    conn.close()  
-    return render_template('new_project.html', vendors=vendors, projects=projects)
-
-
-
-# Measurement sheet route
-
-
-@app.route('/add_measurement_sheet', methods=['GET', 'POST'])
-def add_measurement_sheet():
     if 'user' not in session:
         return redirect(url_for('login'))
 
     conn = get_db()
-    c = conn.cursor()
+    cur = conn.cursor()
+    cur.execute("SELECT vendor_name FROM vendors")
+    vendors = cur.fetchall()
 
     if request.method == 'POST':
-        try:
-            duct_no = request.form['duct_no']
-            duct_type = request.form['duct_type'].lower()
-            w1 = float(request.form['w1'] or 0)
-            h1 = float(request.form['h1'] or 0)
-            w2 = float(request.form['w2'] or 0)
-            h2 = float(request.form['h2'] or 0)
-            length = float(request.form['length'] or 0)
-            degree = float(request.form['degree'] or 0)
-            quantity = int(request.form['quantity'] or 1)
-            factor = float(request.form['factor'] or 1)
+        file = request.files['drawing']
+        filename = secure_filename(file.filename)
+        filepath = os.path.join('static', filename)
+        file.save(filepath)
 
-            area = 0
-            if duct_type == 'st':
-                area = 2 * ((w1 + h1) / 1000) * (length / 1000) * quantity
-            elif duct_type == 'red':
-                area = ((w1 + h1 + w2 + h2) / 2 / 1000) * (length / 1000) * quantity * factor
-            elif duct_type == 'dm':
-                area = (w1 * h1) / 1000000 * quantity
-            elif duct_type == 'offset':
-                area = ((w1 + h1 + w2 + h2) / 2 / 1000) * (length / 1000) * quantity * factor
-            elif duct_type == 'shoe':
-                area = (w1 + h1) / 1000 * (length / 1000) * quantity * factor
-            elif duct_type == 'vanes':
-                area = (w1 / 1000) * (h1 / 1000) * quantity
-            elif duct_type == 'elb':
-                area = 2 * ((w1 + h1) / 1000) * ((length * degree / 360) / 1000) * quantity * factor
+        form_data = (
+            request.form['enquiry_id'],
+            request.form['vendor_name'],
+            request.form['quotation'],
+            request.form['gst'],
+            request.form['start_date'],
+            request.form['address'],
+            request.form['end_date'],
+            request.form['email'],
+            request.form['project_location'],
+            request.form['contact_number'],
+            request.form['project_incharge'],
+            request.form['notes'],
+            filename,
+            filename
+        )
 
-            # Gauge logic
-            gauge = '24G'
-            if w1 > 1000:
-                gauge = '22G'
-            if w1 > 1500:
-                gauge = '20G'
-            if w1 > 2000:
-                gauge = '18G'
-
-            # Accessories
-            cleat_24g = 12 * quantity if gauge == '24G' else 0
-            cleat_22g = 10 * quantity if gauge == '22G' else 0
-            cleat_20g = 8 * quantity if gauge == '20G' else 0
-            cleat_18g = 4 * quantity if gauge == '18G' else 0
-            cleat = cleat_24g + cleat_22g + cleat_20g + cleat_18g
-            gasket = (w1 + w2 + h1 + h2) * quantity / 1000
-            corner_pieces = 8 if duct_type == 'dm' else 0
-
-            c.execute('''
-                INSERT INTO measurement_sheets 
-                (duct_no, duct_type, w1, h1, w2, h2, length, degree, quantity, factor, area, gauge,
-                 cleat_24g, cleat_22g, cleat_20g, cleat_18g, cleat, gasket, corner_pieces)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (
-                duct_no, duct_type, w1, h1, w2, h2, length, degree, quantity, factor, area, gauge,
-                cleat_24g, cleat_22g, cleat_20g, cleat_18g, cleat, gasket, corner_pieces
-            ))
-            conn.commit()
-        except Exception as e:
-            print("ERROR:", e)
-            return "Bad Request", 400
-
-    # ✅ Fetch all entries and convert to dict for table display
-    entries_raw = c.execute('SELECT * FROM measurement_sheets').fetchall()
-    columns = [column[0] for column in c.description]
-    entries = [dict(zip(columns, row)) for row in entries_raw]
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    return render_template('measurement_sheet.html', entries=entries, timestamp=timestamp)
-# Delete route
-
-
-
-
-@app.route('/edit_measurement_sheet/<int:sheet_id>', methods=['GET', 'POST'])
-def edit_measurement_sheet(sheet_id):
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-
-    if request.method == 'POST':
-        # Get updated values from form
-        duct_no = request.form['duct_no']
-        duct_type = request.form['duct_type']
-        w1 = float(request.form['w1'])
-        h1 = float(request.form['h1'])
-        w2 = float(request.form['w2'])
-        h2 = float(request.form['h2'])
-        length_radius = float(request.form['length_radius'])
-        degree_offset = float(request.form['degree_offset'])
-        quantity = int(request.form['quantity'])
-        gauge = request.form['gauge']
-
-        # Update the row
-        c.execute('''
-            UPDATE measurement_sheets
-            SET duct_no=?, duct_type=?, w1=?, h1=?, w2=?, h2=?, length_radius=?, degree_offset=?, quantity=?, gauge=?
-            WHERE id=?
-        ''', (duct_no, duct_type, w1, h1, w2, h2, length_radius, degree_offset, quantity, gauge, sheet_id))
+        cur.execute("""INSERT INTO projects 
+            (enquiry_id, vendor_name, quotation, gst, start_date, address,
+            end_date, email, project_location, contact_number, project_incharge, notes, drawing, drawing_filename)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", form_data)
 
         conn.commit()
+        cur.close()
         conn.close()
-        return redirect(url_for('add_measurement_sheet'))
+        return render_template('new_project.html', vendors=vendors, success="Project added successfully")
 
-    # GET: load existing data
-    c.execute('SELECT * FROM measurement_sheets WHERE id=?', (sheet_id,))
-    sheet = c.fetchone()
+    cur.close()
     conn.close()
+    return render_template('new_project.html', vendors=vendors)
 
-    return render_template('edit_measurement_sheet.html', sheet=sheet)
-
-
-@app.route('/delete_measurement_sheet/<int:sheet_id>')
-def delete_measurement_sheet(sheet_id):
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute('DELETE FROM measurement_sheets WHERE id=?', (sheet_id,))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('measurement_sheet'))
-
-    
 
 # --- ENQUIRY SUMMARY PAGE ---
 @app.route('/enquiry_summary')
 def enquiry_summary():
     if 'user' not in session:
         return redirect(url_for('login'))
-    return render_template('enquiry_summary.html')
 
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM projects")
+    projects = cur.fetchall()
+    cur.close()
+    conn.close()
+    return render_template('enquiry_summary.html', projects=projects)
 
-# --- ENQUIRY PROGRESS TABLE PAGE ---
-@app.route('/enquiry_progress_table')
-def enquiry_progress_table():
+# --- ADD MEASUREMENT SHEET PAGE ---
+@app.route('/add_measurement_sheet')
+def add_measurement_sheet():
     if 'user' not in session:
         return redirect(url_for('login'))
 
-    conn = get_db()
-    c = conn.cursor()
-    c.row_factory = sqlite3.Row
-    entries = c.execute('SELECT * FROM measurement_sheets').fetchall()
-    return render_template('enquiry_progress_table.html', entries=entries)
+    project_id = request.args.get('project_id')
+    if not project_id:
+        return redirect(url_for('enquiry_summary'))
 
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM measurement_sheets WHERE project_id = %s", (project_id,))
+    items = cur.fetchall()
+    cur.close()
+    conn.close()
+    return render_template('add_measurement_sheet.html', items=items, project_id=project_id)
+
+# --- ADD ENTRY TO MEASUREMENT SHEET TABLE ---
+@app.route('/add_measurement_entry', methods=['POST'])
+def add_measurement_entry():
+    data = request.get_json()
+    project_id = data['project_id']
+    duct_no = data['duct_no']
+    duct_type = data['duct_type']
+    w1 = float(data['w1'] or 0)
+    h1 = float(data['h1'] or 0)
+    w2 = float(data['w2'] or 0)
+    h2 = float(data['h2'] or 0)
+    length_radius = float(data['length_radius'] or 0)
+    degree_offset = float(data['degree_offset'] or 0)
+    quantity = int(data['quantity'] or 1)
+    gauge = data['gauge']
+
+    # Area Calculation Based on Duct Type
+    if duct_type == 'ST':
+        area = 2 * ((w1 + h1) * length_radius) / 144
+    elif duct_type == 'RED':
+        area = 2 * ((w1 + h1 + w2 + h2) / 2) * length_radius / 144
+    elif duct_type == 'DM':
+        area = (w1 * h1) / 144
+    elif duct_type == 'OFFSET':
+        area = ((w1 + h1) * length_radius * 1.5) / 144
+    elif duct_type == 'SHOE':
+        area = ((w1 + h1) * length_radius * 1.25) / 144
+    elif duct_type == 'VANES':
+        area = (w1 * h1) / 144
+    elif duct_type == 'ELB':
+        area = 2 * ((w1 + h1) * degree_offset * 3.14 / 180 * length_radius) / 144
+    else:
+        area = 0
+
+    area = round(area * quantity, 2)
+
+    # Gauge values
+    g24 = area if gauge == '24G' else 0
+    g22 = area if gauge == '22G' else 0
+    g20 = area if gauge == '20G' else 0
+    g18 = area if gauge == '18G' else 0
+
+    # Cleat per gauge
+    cleat = 0
+    if gauge == '24G':
+        cleat = 0.75 * area
+    elif gauge == '22G':
+        cleat = 1.25 * area
+    elif gauge == '20G':
+        cleat = 1.75 * area
+    elif gauge == '18G':
+        cleat = 2.5 * area
+
+    cleat = round(cleat, 2)
+
+    # Accessories
+    gasket = round(0.5 * area, 2)
+    corner_pieces = 8 if duct_type != 'DM' else 0
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute('''INSERT INTO measurement_sheets 
+        (duct_no, duct_type, w1, h1, w2, h2, length_radius, degree_offset, quantity, gauge, area, 
+         g24, g22, g20, g18, cleat, gasket, corner_pieces, project_id)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+        (duct_no, duct_type, w1, h1, w2, h2, length_radius, degree_offset, quantity, gauge, area,
+         g24, g22, g20, g18, cleat, gasket, corner_pieces, project_id))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+    return jsonify(success=True)
+
+
+
+# --- DELETE ENTRY FROM MEASUREMENT SHEET ---
+@app.route('/delete_measurement/<int:id>', methods=['POST'])
+def delete_measurement(id):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM measurement_sheets WHERE id = %s", (id,))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return jsonify(success=True)
+
+# --- EDIT ENTRY (RETURN DATA FOR MODAL OR INLINE EDIT) ---
+@app.route('/get_measurement/<int:id>', methods=['GET'])
+def get_measurement(id):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM measurement_sheets WHERE id = %s", (id,))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+
+    if row:
+        keys = ['id', 'duct_no', 'duct_type', 'w1', 'h1', 'w2', 'h2', 'length_radius', 'degree_offset', 'quantity', 'gauge',
+                'area', 'g24', 'g22', 'g20', 'g18', 'cleat', 'gasket', 'corner_pieces', 'project_id']
+        return jsonify(dict(zip(keys, row)))
+    return jsonify(success=False)
 
 # --- PRODUCTION NEW PROJECT PAGE ---
 @app.route('/production_new_project')
 def production_new_project():
     if 'user' not in session:
         return redirect(url_for('login'))
-    return render_template('production_project.html')
-
+    return render_template('production_new_project.html')
 
 # --- PRODUCTION SUMMARY PAGE ---
 @app.route('/production_summary')
@@ -490,140 +345,38 @@ def production_summary():
         return redirect(url_for('login'))
     return render_template('production_summary.html')
 
-
 # --- PRODUCTION PROGRESS TABLE PAGE ---
 @app.route('/production_progress_table')
 def production_progress_table():
     if 'user' not in session:
         return redirect(url_for('login'))
-
-    conn = get_db()
-    c = conn.cursor()
-    c.row_factory = sqlite3.Row
-    entries = c.execute('SELECT * FROM measurement_sheets').fetchall()
-    return render_template('production_progress_table.html', entries=entries)
+    return render_template('production_progress_table.html')
 
 
-# --- INSERT DUMMY VENDORS (PERMANENT) ---
-def insert_permanent_dummy_vendors():
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    dummy_vendors = [
-        ('Madhan Fabricators', 'GSTTN001', 'ABCDE1234F', 'ICICI Bank', 'Chennai', '1234567890', 'ICIC0000123', 'Chennai'),
-        ('Super Ducting Co.', 'GSTTN002', 'BCDEF2345G', 'SBI', 'Coimbatore', '2345678901', 'SBIN0000456', 'Coimbatore'),
-        ('Airflow Systems', 'GSTTN003', 'CDEFG3456H', 'HDFC Bank', 'Madurai', '3456789012', 'HDFC0000789', 'Madurai')
-    ]
-    for vendor in dummy_vendors:
-        c.execute("SELECT 1 FROM vendors WHERE vendor_name = ?", (vendor[0],))
-        if not c.fetchone():
-            c.execute('''INSERT INTO vendors (
-                vendor_name, gst, pan, bank_name, branch, account_no, ifsc, address
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)''', vendor)
-    conn.commit()
-    conn.close()
+# --- ENQUIRY PROGRESS TABLE PAGE ---
+@app.route('/enquiry_progress_table')
+def enquiry_progress_table():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    return render_template('enquiry_progress_table.html')
 
+# --- DASHBOARD PAGE ---
+@app.route('/dashboard')
+def dashboard():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    return render_template('dashboard.html')
 
-@app.route('/insert_dummy_vendors')
-def insert_dummy_vendors():
-    insert_permanent_dummy_vendors()
-    return "Dummy vendors inserted."
+# --- PostgreSQL DATABASE CONNECTION ---
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
+DATABASE_URL = 'postgresql://duct_vendor_app_user:6F8CX3mCEBU8E4azRCf0s6gdQeWaL9bq@dpg-d243r9qli9vc73ca99ag-a.singapore-postgres.render.com/duct_vendor_app'
 
+def get_db():
+    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
-@app.route('/reset_measurement_table')
-def reset_measurement_table():
-    conn = get_db()
-    c = conn.cursor()
-    c.execute('DROP TABLE IF EXISTS measurement_sheets')
-    c.execute('''
-        CREATE TABLE measurement_sheets (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            duct_no TEXT,
-            duct_type TEXT,
-            w1 REAL,
-            h1 REAL,
-            w2 REAL,
-            h2 REAL,
-            length REAL,
-            degree REAL,
-            quantity INTEGER,
-            factor REAL,
-            area REAL,
-            gauge TEXT,
-            cleat_24g INTEGER,
-            cleat_22g INTEGER,
-            cleat_20g INTEGER,
-            cleat_18g INTEGER,
-            cleat INTEGER,
-            gasket REAL,
-            corner_pieces INTEGER
-        )
-    ''')
-    conn.commit()
-    return "measurement_sheets table recreated successfully!"
-
-
-# --- CREATE DEFAULT ADMIN (Optional Setup Route) ---
-@app.route('/create_admin')
-def create_admin():
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    hashed = hashlib.sha256("admin123".encode()).hexdigest()
-    c.execute("INSERT INTO users (username, password) VALUES (?, ?)", ("admin", hashed))
-    conn.commit()
-    conn.close()
-    return "Admin user created."
-
-
-# --- DATABASE INITIALIZATION ---
-def init_db():
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-
-    # Users table
-    c.execute('''CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL
-    )''')
-
-    # Vendors table
-    c.execute('''CREATE TABLE IF NOT EXISTS vendors (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        vendor_name TEXT UNIQUE,
-        gst TEXT,
-        pan TEXT,
-        bank_name TEXT,
-        branch TEXT,
-        account_no TEXT,
-        ifsc TEXT,
-        address TEXT
-    )''')
-
-    # Projects table
-    c.execute('''CREATE TABLE IF NOT EXISTS projects (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        enquiry_id TEXT,
-        vendor_name TEXT,
-        quotation TEXT,
-        gst TEXT,
-        start_date TEXT,
-        end_date TEXT,
-        address TEXT,
-        email TEXT,
-        project_location TEXT,
-        contact_number TEXT,
-        project_incharge TEXT,
-        notes TEXT,
-        drawing_filename TEXT
-    )''')
-
-    conn.commit()
-    conn.close()
-
-
-# --- MAIN ENTRY POINT ---
+# --- RUNNING APP ---
 if __name__ == '__main__':
-    init_db()  # Ensure tables are created
-    insert_permanent_dummy_vendors()  # Ensure dummy vendors are inserted
     app.run(debug=True)
+
