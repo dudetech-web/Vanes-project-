@@ -234,12 +234,88 @@ def new_project():
 
 
 # --- ADD MEASUREMENT SHEET PAGE ---
-@app.route('/add_measurement_sheet')
+
+
+
+
+# Measurement sheet route
+@app.route('/add_measurement_sheet', methods=['GET', 'POST'])
 def add_measurement_sheet():
     if 'user' not in session:
         return redirect(url_for('login'))
-    return render_template('measurement_sheet.html')
 
+    conn = get_db()
+    c = conn.cursor()
+
+    if request.method == 'POST':
+        duct_no = request.form['duct_no']
+        duct_type = request.form['duct_type']
+        w1 = float(request.form['w1'] or 0)
+        h1 = float(request.form['h1'] or 0)
+        w2 = float(request.form['w2'] or 0)
+        h2 = float(request.form['h2'] or 0)
+        length = float(request.form['length'] or 0)
+        degree = float(request.form['degree'] or 0)
+        quantity = int(request.form['quantity'] or 1)
+        factor = float(request.form['factor'] or 1)
+
+        # Area calculation based on type
+        area = 0
+        if duct_type == 'st':
+            area = 2 * (w1 + h1) / 1000 * (length / 1000) * quantity
+        elif duct_type == 'red':
+            area = (w1 + h1 + w2 + h2) / 1000 * (length / 1000) * quantity * factor
+        elif duct_type == 'dm':
+            area = (w1 * h1) / 1000000 * quantity
+        elif duct_type == 'offset':
+            area = (w1 + h1 + w2 + h2) / 1000 * ((length + degree) / 1000) * quantity * factor
+        elif duct_type == 'shoe':
+            area = ((w1 + h1) * 2) / 1000 * (length / 1000) * quantity * factor
+        elif duct_type == 'vanes':
+            area = (w1 / 1000) * (2 * math.pi * (w1 / 1000) / 4) * quantity
+        elif duct_type == 'elb':
+            area = 2 * (w1 + h1) / 1000 * ((h1 / 2) / 1000 + (length / 1000) * math.pi * (degree / 180)) * quantity * factor
+
+        # Gauge decision (for demo purpose - auto assign based on W1)
+        gauge = '24G'
+        if w1 > 1000:
+            gauge = '22G'
+        if w1 > 1500:
+            gauge = '20G'
+        if w1 > 2000:
+            gauge = '18G'
+
+        # Accessory calculations
+        gasket = (w1 + w2 + h1 + h2) * quantity / 1000
+        cleat_24g = quantity * 12 if gauge == '24G' else 0
+        cleat_22g = quantity * 10 if gauge == '22G' else 0
+        cleat_20g = quantity * 8 if gauge == '20G' else 0
+        cleat_18g = quantity * 4 if gauge == '18G' else 0
+        corner_pieces = 8 if duct_type == 'dm' else 0
+
+        c.execute('''
+            INSERT INTO measurement_entries 
+            (duct_no, duct_type, w1, h1, w2, h2, length, degree, quantity, factor, area, gauge, cleat_24g, cleat_22g, cleat_20g, cleat_18g, cleat, gasket, corner_pieces)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+            (duct_no, duct_type, w1, h1, w2, h2, length, degree, quantity, factor, area, gauge, cleat_24g, cleat_22g, cleat_20g, cleat_18g, 0, gasket, corner_pieces)
+        )
+        conn.commit()
+
+    entries = c.execute('SELECT * FROM measurement_entries').fetchall()
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return render_template('measurement_sheet.html', entries=entries, timestamp=timestamp)
+
+# Delete route
+@app.route('/delete_entry/<int:entry_id>')
+def delete_entry(entry_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('DELETE FROM measurement_entries WHERE id = ?', (entry_id,))
+    conn.commit()
+    return redirect(url_for('add_measurement_sheet'))
+
+
+    
 
 # --- ENQUIRY SUMMARY PAGE ---
 @app.route('/enquiry_summary')
