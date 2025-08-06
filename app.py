@@ -485,61 +485,37 @@ def insert_dummy_vendors():
 
 
 
-@app.route('/fix_measurement_table')
-def fix_measurement_table():
+@app.route('/reset_measurement_table')
+def reset_measurement_table():
     conn = get_db()
     c = conn.cursor()
-    try:
-        c.execute("ALTER TABLE measurement_sheets ADD COLUMN length REAL")
-    except:
-        pass
-    try:
-        c.execute("ALTER TABLE measurement_sheets ADD COLUMN degree REAL")
-    except:
-        pass
-    try:
-        c.execute("ALTER TABLE measurement_sheets ADD COLUMN factor REAL")
-    except:
-        pass
-    try:
-        c.execute("ALTER TABLE measurement_sheets ADD COLUMN area REAL")
-    except:
-        pass
-    try:
-        c.execute("ALTER TABLE measurement_sheets ADD COLUMN gauge TEXT")
-    except:
-        pass
-    try:
-        c.execute("ALTER TABLE measurement_sheets ADD COLUMN cleat_24g INTEGER")
-    except:
-        pass
-    try:
-        c.execute("ALTER TABLE measurement_sheets ADD COLUMN cleat_22g INTEGER")
-    except:
-        pass
-    try:
-        c.execute("ALTER TABLE measurement_sheets ADD COLUMN cleat_20g INTEGER")
-    except:
-        pass
-    try:
-        c.execute("ALTER TABLE measurement_sheets ADD COLUMN cleat_18g INTEGER")
-    except:
-        pass
-    try:
-        c.execute("ALTER TABLE measurement_sheets ADD COLUMN cleat INTEGER")
-    except:
-        pass
-    try:
-        c.execute("ALTER TABLE measurement_sheets ADD COLUMN gasket REAL")
-    except:
-        pass
-    try:
-        c.execute("ALTER TABLE measurement_sheets ADD COLUMN corner_pieces INTEGER")
-    except:
-        pass
-
+    c.execute('DROP TABLE IF EXISTS measurement_sheets')
+    c.execute('''
+        CREATE TABLE measurement_sheets (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            duct_no TEXT,
+            duct_type TEXT,
+            w1 REAL,
+            h1 REAL,
+            w2 REAL,
+            h2 REAL,
+            length REAL,
+            degree REAL,
+            quantity INTEGER,
+            factor REAL,
+            area REAL,
+            gauge TEXT,
+            cleat_24g INTEGER,
+            cleat_22g INTEGER,
+            cleat_20g INTEGER,
+            cleat_18g INTEGER,
+            cleat INTEGER,
+            gasket REAL,
+            corner_pieces INTEGER
+        )
+    ''')
     conn.commit()
-    return "✅ Table updated successfully."
+    return "measurement_sheets table recreated successfully!"
 
 
 # --- CREATE DEFAULT ADMIN (Optional Setup Route) ---
