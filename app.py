@@ -32,6 +32,32 @@ def init_db():
         address TEXT, end_date TEXT, email TEXT,
         project_location TEXT, contact_number TEXT,
         project_incharge TEXT, notes TEXT, drawing TEXT)''')
+    
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS measurement_sheets (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            duct_no TEXT,
+            duct_type TEXT,
+            w1 REAL,
+            h1 REAL,
+            w2 REAL,
+            h2 REAL,
+            length_radius REAL,
+            degree_offset REAL,
+            quantity INTEGER,
+            gauge TEXT,
+            area REAL,
+            g24 REAL,
+            g22 REAL,
+            g20 REAL,
+            g18 REAL,
+            cleat REAL,
+            gasket REAL,
+            corner_pieces INTEGER,
+            project_id INTEGER
+        )
+    ''')
+    
 
     conn.commit()
     conn.close()
@@ -56,6 +82,10 @@ def insert_dummy_vendors():
         c.execute("INSERT OR IGNORE INTO vendors (vendor_name, gst, pan, bank_name, branch, account_no, ifsc, address) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", v)
     conn.commit()
     conn.close()
+
+
+
+    
 
 
 
