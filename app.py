@@ -156,24 +156,29 @@ insert_dummy_vendors()
 def login():
     error = None
     if request.method == 'POST':
-        username = request.form['username']
-        password = hashlib.sha256(request.form['password'].encode()).hexdigest()
+        try:
+            username = request.form['username']
+            password = hashlib.sha256(request.form['password'].encode()).hexdigest()
 
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute("SELECT * FROM admin WHERE username=%s AND password=%s", (username, password))
-        user = cur.fetchone()
-        cur.close()
-        conn.close()
+            conn = get_db()
+            cur = conn.cursor()
+            cur.execute("SELECT * FROM admin WHERE username = %s AND password = %s", (username, password))
+            user = cur.fetchone()
+            cur.close()
+            conn.close()
 
-        if user:
-            session['user'] = username
-            return redirect(url_for('dashboard'))
-        else:
-            error = 'Invalid credentials'
+            if user:
+                session['user'] = username
+                return redirect(url_for('dashboard'))
+            else:
+                error = 'Invalid credentials'
+
+        except Exception as e:
+            # Print full error to console
+            print("Login error:", e)
+            error = 'Internal server error. Please try again.'
 
     return render_template('login.html', error=error)
-
 
 # --- LOGOUT ---
 @app.route('/logout')
