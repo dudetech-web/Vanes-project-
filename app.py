@@ -1,10 +1,11 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, send_file
 from werkzeug.utils import secure_filename
 import psycopg2
 import hashlib
 import datetime
 import math
 import os
+import xlsxwriter
 
 app = Flask(__name__)
 app.secret_key = 'secret_key'
@@ -20,7 +21,6 @@ def init_db():
     conn = get_db()
     cur = conn.cursor()
 
-    # Admin table
     cur.execute('''
         CREATE TABLE IF NOT EXISTS admin (
             id SERIAL PRIMARY KEY,
@@ -29,7 +29,6 @@ def init_db():
         )
     ''')
 
-    # Vendors table
     cur.execute('''
         CREATE TABLE IF NOT EXISTS vendors (
             id SERIAL PRIMARY KEY,
@@ -44,7 +43,6 @@ def init_db():
         )
     ''')
 
-    # Safely add UNIQUE constraint to vendor_name
     cur.execute("""
         DO $$
         BEGIN
@@ -57,7 +55,6 @@ def init_db():
         $$;
     """)
 
-    # Projects table
     cur.execute('''
         CREATE TABLE IF NOT EXISTS projects (
             id SERIAL PRIMARY KEY,
@@ -78,7 +75,6 @@ def init_db():
         )
     ''')
 
-    # Measurement sheets table
     cur.execute('''
         CREATE TABLE IF NOT EXISTS measurement_sheets (
             id SERIAL PRIMARY KEY,
@@ -88,8 +84,8 @@ def init_db():
             h1 REAL,
             w2 REAL,
             h2 REAL,
-            length_radius REAL,
-            degree_offset REAL,
+            length REAL,
+            degree REAL,
             quantity INTEGER,
             gauge TEXT,
             area REAL,
@@ -107,6 +103,32 @@ def init_db():
     conn.commit()
     cur.close()
     conn.close()
+
+# --- INSERT DUMMY VENDORS ---
+def insert_dummy_vendors():
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+
+        dummy_vendors = [
+            ('Vendor A', 'GST123', 'PAN123', 'Bank A', 'Branch A', '1234567890', 'IFSC001', 'Address A'),
+            ('Vendor B', 'GST456', 'PAN456', 'Bank B', 'Branch B', '2345678901', 'IFSC002', 'Address B'),
+            ('Vendor C', 'GST789', 'PAN789', 'Bank C', 'Branch C', '3456789012', 'IFSC003', 'Address C')
+        ]
+
+        for v in dummy_vendors:
+            cur.execute("""
+                INSERT INTO vendors 
+                (vendor_name, gst, pan, bank_name, branch, account_no, ifsc, address)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (vendor_name) DO NOTHING
+            """, v)
+
+        conn.commit()
+        cur.close()
+        conn.close()
+    except Exception as e:
+        print("Error inserting dummy vendors:", e)
 
 # --- CREATE DEFAULT ADMIN USER ---
 @app.route('/create_admin')
@@ -126,35 +148,9 @@ def create_admin():
     conn.close()
     return 'Admin created successfully'
 
-
-# --- INSERT DUMMY VENDORS ---
-def insert_dummy_vendors():
-    conn = get_db()
-    cur = conn.cursor()
-
-    dummy_vendors = [
-        ('Vendor A', 'GST123', 'PAN123', 'Bank A', 'Branch A', '1234567890', 'IFSC001', 'Address A'),
-        ('Vendor B', 'GST456', 'PAN456', 'Bank B', 'Branch B', '2345678901', 'IFSC002', 'Address B'),
-        ('Vendor C', 'GST789', 'PAN789', 'Bank C', 'Branch C', '3456789012', 'IFSC003', 'Address C')
-    ]
-
-    for v in dummy_vendors:
-        cur.execute("""
-            INSERT INTO vendors 
-            (vendor_name, gst, pan, bank_name, branch, account_no, ifsc, address)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT (vendor_name) DO NOTHING
-        """, v)
-
-    conn.commit()
-    cur.close()
-    conn.close()
-
-# --- CALL DUMMY INSERT ON STARTUP ---
-insert_dummy_vendors()
+# --- INITIALIZE DB + DUMMY DATA ---
 init_db()
-
-
+insert_dummy_vendors()
 # --- LOGIN PAGE ---
 @app.route('/', methods=['GET', 'POST'])
 def login():
