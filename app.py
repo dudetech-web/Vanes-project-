@@ -322,14 +322,55 @@ def add_measurement_sheet():
     return render_template('measurement_sheet.html', entries=entries, timestamp=timestamp)
 
 # Delete route
-@app.route('/delete_entry/<int:entry_id>')
-def delete_entry(entry_id):
-    conn = get_db()
-    c = conn.cursor()
-    c.execute('DELETE FROM measurement_entries WHERE id = ?', (entry_id,))
-    conn.commit()
-    return redirect(url_for('add_measurement_sheet'))
 
+
+
+
+@app.route('/edit_measurement_sheet/<int:sheet_id>', methods=['GET', 'POST'])
+def edit_measurement_sheet(sheet_id):
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+
+    if request.method == 'POST':
+        # Get updated values from form
+        duct_no = request.form['duct_no']
+        duct_type = request.form['duct_type']
+        w1 = float(request.form['w1'])
+        h1 = float(request.form['h1'])
+        w2 = float(request.form['w2'])
+        h2 = float(request.form['h2'])
+        length_radius = float(request.form['length_radius'])
+        degree_offset = float(request.form['degree_offset'])
+        quantity = int(request.form['quantity'])
+        gauge = request.form['gauge']
+
+        # Update the row
+        c.execute('''
+            UPDATE measurement_sheets
+            SET duct_no=?, duct_type=?, w1=?, h1=?, w2=?, h2=?, length_radius=?, degree_offset=?, quantity=?, gauge=?
+            WHERE id=?
+        ''', (duct_no, duct_type, w1, h1, w2, h2, length_radius, degree_offset, quantity, gauge, sheet_id))
+
+        conn.commit()
+        conn.close()
+        return redirect(url_for('add_measurement_sheet'))
+
+    # GET: load existing data
+    c.execute('SELECT * FROM measurement_sheets WHERE id=?', (sheet_id,))
+    sheet = c.fetchone()
+    conn.close()
+
+    return render_template('edit_measurement_sheet.html', sheet=sheet)
+
+
+@app.route('/delete_measurement_sheet/<int:sheet_id>')
+def delete_measurement_sheet(sheet_id):
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute('DELETE FROM measurement_sheets WHERE id=?', (sheet_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('measurement_sheet'))
 
     
 
