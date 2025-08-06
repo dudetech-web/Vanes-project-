@@ -467,7 +467,12 @@ def enquiry_summary():
 def enquiry_progress_table():
     if 'user' not in session:
         return redirect(url_for('login'))
-    return render_template('enquiry_progress.html')
+
+    conn = get_db()
+    c = conn.cursor()
+    c.row_factory = sqlite3.Row
+    entries = c.execute('SELECT * FROM measurement_sheets').fetchall()
+    return render_template('enquiry_progress_table.html', entries=entries)
 
 
 # --- PRODUCTION NEW PROJECT PAGE ---
@@ -491,7 +496,12 @@ def production_summary():
 def production_progress_table():
     if 'user' not in session:
         return redirect(url_for('login'))
-    return render_template('production_progress.html')
+
+    conn = get_db()
+    c = conn.cursor()
+    c.row_factory = sqlite3.Row
+    entries = c.execute('SELECT * FROM measurement_sheets').fetchall()
+    return render_template('production_progress_table.html', entries=entries)
 
 
 # --- INSERT DUMMY VENDORS (PERMANENT) ---
