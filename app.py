@@ -156,6 +156,41 @@ def fix_projects_table():
     return msg
 
 
+
+@app.route('/fix_schema')
+def fix_schema():
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+
+    columns_to_add = [
+        ('length', 'REAL'),
+        ('degree', 'REAL'),
+        ('factor', 'REAL'),
+        ('area', 'REAL'),
+        ('gauge', 'TEXT'),
+        ('cleat_24g', 'INTEGER'),
+        ('cleat_22g', 'INTEGER'),
+        ('cleat_20g', 'INTEGER'),
+        ('cleat_18g', 'INTEGER'),
+        ('cleat', 'INTEGER'),
+        ('gasket', 'REAL'),
+        ('corner_pieces', 'INTEGER')
+    ]
+
+    added_columns = []
+    for col_name, col_type in columns_to_add:
+        try:
+            c.execute(f'ALTER TABLE measurement_sheets ADD COLUMN {col_name} {col_type}')
+            added_columns.append(col_name)
+        except sqlite3.OperationalError:
+            pass  # Column already exists
+
+    conn.commit()
+    conn.close()
+
+    return f"Schema update complete. Columns added: {', '.join(added_columns) if added_columns else 'None'}"
+
+
 # --- EMPLOYEE REGISTRATION PAGE ---
 @app.route('/employee_registration', methods=['GET', 'POST'])
 def employee_registration():
