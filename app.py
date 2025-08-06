@@ -574,6 +574,13 @@ def production_progress_table():
     return render_template('production_progress.html')
 
 
+@app.route('/fabrication')
+def fabrication():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    return render_template('fabrication.html')
+
+
 # --- DASHBOARD PAGE ---
 
 
