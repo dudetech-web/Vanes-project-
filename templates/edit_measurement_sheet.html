@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Measurement Sheet</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+<div class="container mt-5">
+    <h2>Edit Measurement Sheet</h2>
+    <form method="POST">
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label>Duct No</label>
+                <input type="text" name="duct_no" value="{{ sheet[1] }}" class="form-control" required>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label>Duct Type</label>
+                <input type="text" name="duct_type" value="{{ sheet[2] }}" class="form-control" required>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label>W1</label>
+                <input type="number" step="0.01" name="w1" value="{{ sheet[3] }}" class="form-control" required>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label>H1</label>
+                <input type="number" step="0.01" name="h1" value="{{ sheet[4] }}" class="form-control" required>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label>W2</label>
+                <input type="number" step="0.01" name="w2" value="{{ sheet[5] }}" class="form-control" required>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label>H2</label>
+                <input type="number" step="0.01" name="h2" value="{{ sheet[6] }}" class="form-control" required>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label>Length / Radius</label>
+                <input type="number" step="0.01" name="length_radius" value="{{ sheet[7] }}" class="form-control" required>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label>Degree / Offset</label>
+                <input type="number" step="0.01" name="degree_offset" value="{{ sheet[8] }}" class="form-control" required>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label>Quantity</label>
+                <input type="number" name="quantity" value="{{ sheet[9] }}" class="form-control" required>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label>Gauge</label>
+                <select name="gauge" class="form-control" required>
+                    <option value="24G" {% if sheet[10] == '24G' %}selected{% endif %}>24G</option>
+                    <option value="22G" {% if sheet[10] == '22G' %}selected{% endif %}>22G</option>
+                    <option value="20G" {% if sheet[10] == '20G' %}selected{% endif %}>20G</option>
+                    <option value="18G" {% if sheet[10] == '18G' %}selected{% endif %}>18G</option>
+                </select>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Update Sheet</button>
+        <a href="{{ url_for('add_measurement_sheet') }}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+</body>
+</html>
