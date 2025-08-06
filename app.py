@@ -61,8 +61,19 @@ def insert_dummy_vendors():
 
 # Ensure 'drawing_filename' column exists in 'projects' table
 
+def ensure_columns():
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    try:
+        c.execute("ALTER TABLE projects ADD COLUMN drawing_filename TEXT")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+    conn.commit()
+    conn.close()
 
+# Initialization
 init_db()
+ensure_columns()
 insert_permanent_admin()
 insert_dummy_vendors()
 
