@@ -542,6 +542,13 @@ def enquiry_summary():
         return redirect(url_for('login'))
     return render_template('enquiry_summary.html')
 
+
+@app.route('/sheet_cutting')
+def sheet_cutting():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    return render_template('sheet_cutting.html')
+
 @app.route('/enquiry_progress_table')
 def enquiry_progress_table():
     if 'user' not in session:
