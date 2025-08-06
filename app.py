@@ -31,7 +31,7 @@ def init_db():
     cur.execute('''
         CREATE TABLE IF NOT EXISTS vendors (
             id SERIAL PRIMARY KEY,
-            vendor_name TEXT UNIQUE,
+            vendor_name TEXT,
             gst TEXT,
             pan TEXT,
             bank_name TEXT,
@@ -40,6 +40,11 @@ def init_db():
             ifsc TEXT,
             address TEXT
         )
+    ''')
+
+    # Ensure vendor_name is UNIQUE to support ON CONFLICT
+    cur.execute('''
+        ALTER TABLE vendors ADD CONSTRAINT IF NOT EXISTS unique_vendor_name UNIQUE (vendor_name)
     ''')
 
     cur.execute('''
@@ -61,6 +66,10 @@ def init_db():
             drawing_filename TEXT
         )
     ''')
+
+    conn.commit()
+    cur.close()
+    conn.close()
 
     conn.commit()
     conn.close()
