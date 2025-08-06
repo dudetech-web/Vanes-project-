@@ -60,16 +60,7 @@ def insert_dummy_vendors():
 
 
 # Ensure 'drawing_filename' column exists in 'projects' table
-def ensure_column_exists():
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    try:
-        c.execute("ALTER TABLE projects ADD COLUMN drawing_filename TEXT")
-        print("✔ drawing_filename column added.")
-    except sqlite3.OperationalError:
-        print("ℹ drawing_filename column already exists.")
-    conn.commit()
-    conn.close()
+
 
 init_db()
 insert_permanent_admin()
@@ -111,6 +102,21 @@ def dashboard():
     if 'user' not in session:
         return redirect(url_for('login'))
     return render_template('dashboard.html')
+
+
+
+@app.route('/fix_projects_table')
+def fix_projects_table():
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    try:
+        c.execute("ALTER TABLE projects ADD COLUMN drawing_filename TEXT")
+        msg = "drawing_filename column added successfully."
+    except sqlite3.OperationalError:
+        msg = "drawing_filename column already exists."
+    conn.commit()
+    conn.close()
+    return msg
 
 
 # --- EMPLOYEE REGISTRATION PAGE ---
