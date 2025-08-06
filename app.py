@@ -472,6 +472,64 @@ def insert_dummy_vendors():
     return "Dummy vendors inserted."
 
 
+
+@app.route('/fix_measurement_table')
+def fix_measurement_table():
+    conn = get_db()
+    c = conn.cursor()
+    try:
+        c.execute("ALTER TABLE measurement_sheets ADD COLUMN length REAL")
+    except:
+        pass
+    try:
+        c.execute("ALTER TABLE measurement_sheets ADD COLUMN degree REAL")
+    except:
+        pass
+    try:
+        c.execute("ALTER TABLE measurement_sheets ADD COLUMN factor REAL")
+    except:
+        pass
+    try:
+        c.execute("ALTER TABLE measurement_sheets ADD COLUMN area REAL")
+    except:
+        pass
+    try:
+        c.execute("ALTER TABLE measurement_sheets ADD COLUMN gauge TEXT")
+    except:
+        pass
+    try:
+        c.execute("ALTER TABLE measurement_sheets ADD COLUMN cleat_24g INTEGER")
+    except:
+        pass
+    try:
+        c.execute("ALTER TABLE measurement_sheets ADD COLUMN cleat_22g INTEGER")
+    except:
+        pass
+    try:
+        c.execute("ALTER TABLE measurement_sheets ADD COLUMN cleat_20g INTEGER")
+    except:
+        pass
+    try:
+        c.execute("ALTER TABLE measurement_sheets ADD COLUMN cleat_18g INTEGER")
+    except:
+        pass
+    try:
+        c.execute("ALTER TABLE measurement_sheets ADD COLUMN cleat INTEGER")
+    except:
+        pass
+    try:
+        c.execute("ALTER TABLE measurement_sheets ADD COLUMN gasket REAL")
+    except:
+        pass
+    try:
+        c.execute("ALTER TABLE measurement_sheets ADD COLUMN corner_pieces INTEGER")
+    except:
+        pass
+
+    conn.commit()
+    return "✅ Table updated successfully."
+
+
 # --- CREATE DEFAULT ADMIN (Optional Setup Route) ---
 @app.route('/create_admin')
 def create_admin():
